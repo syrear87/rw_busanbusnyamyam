@@ -45,7 +45,7 @@ app.*.map.json
 /android/app/release
 
 # Android local properties (contains API keys)
-# android/local.properties
+android/local.properties
 
 # iOS config files (contains API keys)
-# ios/Runner/Config.xcconfig
+ios/Runner/Config.xcconfig
