@@ -1,64 +1,45 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
+import 'package:flutter/foundation.dart';
 import 'bis_config.dart';
 
 class BisHttp {
-  static Future<xml.XmlDocument> getXml(
-    String path,
-    Map<String, String?> q,
-  ) async {
-    final filteredQ = <String, String>{};
+  static Future<xml.XmlDocument> getXml(String path, Map<String, String?> q) async {
+    final query = <String, String>{
+      'serviceKey': BisConfig.key,
+    };
+    
+    // null이 아니고 비어있지 않은 파라미터만 추가
     for (final entry in q.entries) {
       if (entry.value != null && entry.value!.isNotEmpty) {
-        filteredQ[entry.key] = entry.value!;
+        query[entry.key] = entry.value!;
       }
     }
-    final qp = <String, String>{
-      'serviceKey': BisConfig.key, // do not double-encode; Uri handles it
-      ...filteredQ,
-    };
-    final uri = Uri.parse(
-      '${BisConfig.base}$path',
-    ).replace(queryParameters: qp);
-
-    print('🔗 HTTP 요청: $uri');
-
+    final uri = Uri.parse('${BisConfig.base}$path').replace(queryParameters: query);
+    debugPrint('🔗 BIS GET $uri');
     final res = await http.get(uri).timeout(BisConfig.timeout);
-
-    print('📡 HTTP 응답: ${res.statusCode}');
-
     if (res.statusCode != 200) {
-      print('❌ HTTP 에러: ${res.statusCode}');
       throw Exception('HTTP ${res.statusCode}');
     }
-
-    final body = utf8.decode(res.bodyBytes); // keep Korean
-    print('📄 응답 본문 길이: ${body.length}자');
-    print(
-      '📄 응답 미리보기: ${body.length > 200 ? body.substring(0, 200) + '...' : body}',
-    );
-
+    final body = utf8.decode(res.bodyBytes);
     final doc = xml.XmlDocument.parse(body);
-    final code = _text(doc, 'resultCode');
-    final msg = _text(doc, 'resultMsg');
-
-    print('📊 BIS 응답 코드: $code, 메시지: $msg');
-
+    final code = _first(doc, 'resultCode');
     if (code != '00') {
-      print('❌ BIS API 에러: $code - $msg');
-      throw Exception('BIS error $code $msg');
+      throw Exception('BIS $code ${_first(doc, 'resultMsg')}');
     }
-
-    final itemCount = doc.findAllElements('item').length;
-    print('📋 파싱된 아이템 수: $itemCount');
-
     return doc;
   }
 
-  static String _text(xml.XmlDocument doc, String tag) =>
-      doc.findAllElements(tag).firstOrNull?.text.trim() ?? '';
+  static String _first(xml.XmlDocument d, String tag) =>
+      d.findAllElements(tag).isEmpty ? '' : d.findAllElements(tag).first.text.trim();
 
-  static Iterable<xml.XmlElement> items(xml.XmlDocument doc) =>
-      doc.findAllElements('item');
+  static Iterable<xml.XmlElement> items(xml.XmlDocument d) => d.findAllElements('item');
 }
+
+// 과다 호출 방지를 위한 스로틀 함수
+Future<T> throttle<T>(Duration d, Future<T> Function() f) async {
+  await Future.delayed(d); 
+  return await f();
+}
+

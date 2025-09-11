@@ -47,7 +47,7 @@ final nearestStopsProvider = Provider<List<({Stop s, int m})>>((ref) {
 // 지도 중심 위치 provider
 final mapCenterProvider = StateProvider<LatLng?>((ref) => null);
 
-// 지도 중심 기준 반경 500m 내 정류장 provider
+// 지도 중심 기준 반경 500m 내 정류장 provider (지도용)
 final nearbyStopsProvider = Provider<List<({Stop s, int m})>>((ref) {
   final stops = ref
       .watch(stopsProvider)
@@ -68,13 +68,48 @@ final nearbyStopsProvider = Provider<List<({Stop s, int m})>>((ref) {
 
   for (final s in stops) {
     final distance = _distM(center.latitude, center.longitude, s.lat, s.lng);
-    // 반경 500m 내의 정류장만 포함
+    // 반경 500m 내의 정류장만 포함 (지도용)
     if (distance <= 500) {
       res.add((s: s, m: distance));
     }
   }
 
   res.sort((a, b) => a.m.compareTo(b.m));
+  return res;
+});
+
+// 선택된 반경 provider
+final selectedRadiusProvider = StateProvider<int>((ref) => 100);
+
+// 리스트용: 사용자 위치 기준 선택된 반경 내 정류장 provider
+final nearbyStopsListProvider = Provider<List<({Stop s, int m})>>((ref) {
+  final stops = ref
+      .watch(stopsProvider)
+      .maybeWhen(data: (v) => v, orElse: () => const <Stop>[]);
+  final userPos = ref
+      .watch(locationController)
+      .maybeWhen(data: (p) => p, orElse: () => null);
+  final selectedRadius = ref.watch(selectedRadiusProvider);
+
+  print('📍 nearbyStopsListProvider 실행 - 반경: ${selectedRadius}m, 정류장 수: ${stops.length}');
+
+  if (userPos == null) {
+    print('📍 사용자 위치 없음');
+    return [];
+  }
+
+  final res = <({Stop s, int m})>[];
+
+  for (final s in stops) {
+    final distance = _distM(userPos.latitude, userPos.longitude, s.lat, s.lng);
+    // 선택된 반경 내의 정류장만 포함 (리스트용)
+    if (distance <= selectedRadius) {
+      res.add((s: s, m: distance));
+    }
+  }
+
+  res.sort((a, b) => a.m.compareTo(b.m));
+  print('📍 필터링 결과: ${res.length}개 정류장 (반경 ${selectedRadius}m)');
   return res;
 });
 

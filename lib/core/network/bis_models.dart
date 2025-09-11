@@ -1,31 +1,13 @@
 class Station {
-  final String bstopid;
-  final String bstopnm;
-  final String arsno;
-  final double lat;
-  final double lng;
-
-  const Station({
-    required this.bstopid,
-    required this.bstopnm,
-    required this.arsno,
-    required this.lat,
-    required this.lng,
-  });
+  final String bstopid, bstopnm, arsno;
+  final double lat, lng;
+  const Station({required this.bstopid, required this.bstopnm, required this.arsno, required this.lat, required this.lng});
 }
 
 class Arrival {
-  final String lineid;
-  final String lineno;
-  final String? predict1;
-  final String? predict2;
-
-  const Arrival({
-    required this.lineid,
-    required this.lineno,
-    this.predict1,
-    this.predict2,
-  });
+  final String lineid, lineno, nodenm;
+  final String min1, station1, min2, station2; // strings as-is
+  const Arrival({required this.lineid, required this.lineno, required this.nodenm, required this.min1, required this.station1, required this.min2, required this.station2});
 }
 
 class RouteInfo {
@@ -36,13 +18,6 @@ class RouteInfo {
 }
 
 class RouteStop {
-  final String bstopid;
-  final String bstopnm;
-  final String arsno;
-
-  const RouteStop({
-    required this.bstopid,
-    required this.bstopnm,
-    required this.arsno,
-  });
+  final String bstopid, bstopnm, arsno, lineno;
+  const RouteStop({required this.bstopid, required this.bstopnm, required this.arsno, required this.lineno});
 }
