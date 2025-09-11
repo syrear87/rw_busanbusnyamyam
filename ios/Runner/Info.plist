@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>GMSApiKey</key>
+	<string>$(GMS_API_KEY)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>가까운 정류장을 찾기 위해 위치 정보가 필요합니다.</string>
 </dict>
 </plist>

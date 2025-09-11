@@ -1,8 +1,18 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.syusyumarion.busanbusnyamyam"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ADD: location + notifications (T+) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>
+
     <application
-        android:label="busanbusnyamyam"
         android:name="${applicationName}"
+        android:label="부산버스 냠냠"
         android:icon="@mipmap/ic_launcher">
+        <meta-data android:name="com.google.android.geo.API_KEY"
+                   android:value="${MAPS_API_KEY}"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
