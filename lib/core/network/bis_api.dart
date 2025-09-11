@@ -61,6 +61,7 @@ class BisApi {
         station1: t('station1'),
         min2:     t('min2'),
         station2: t('station2'),
+        bustype:  t('bustype'),
       );
     }).toList();
   }

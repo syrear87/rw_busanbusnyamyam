@@ -79,7 +79,7 @@ final nearbyStopsProvider = Provider<List<({Stop s, int m})>>((ref) {
 });
 
 // 선택된 반경 provider
-final selectedRadiusProvider = StateProvider<int>((ref) => 100);
+final selectedRadiusProvider = StateProvider<int>((ref) => 300);
 
 // 리스트용: 사용자 위치 기준 선택된 반경 내 정류장 provider
 final nearbyStopsListProvider = Provider<List<({Stop s, int m})>>((ref) {

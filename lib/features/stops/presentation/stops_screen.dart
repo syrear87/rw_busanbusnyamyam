@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,21 +21,59 @@ class StopsScreen extends ConsumerStatefulWidget {
   ConsumerState<StopsScreen> createState() => _StopsScreenState();
 }
 
-class _StopsScreenState extends ConsumerState<StopsScreen> {
+class _StopsScreenState extends ConsumerState<StopsScreen> with WidgetsBindingObserver, TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   GoogleMapController? _mapController;
   LatLngBounds? _currentMapBounds;
-  int _selectedRadius = 100; // 기본값 100m
+  int _selectedRadius = 300; // 기본값 300m
   String? _selectedStopId; // 선택된 정류장 ID
   final ScrollController _listScrollController = ScrollController(); // 리스트 스크롤 컨트롤러
+  Timer? _uiUpdateTimer; // UI 업데이트용 타이머
+  AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
+  
+  // 새로고침 버튼 쿨다운 관련
+  bool _isRefreshCooldown = false; // 쿨다운 상태
+  int _refreshCooldownSeconds = 0; // 남은 쿨다운 시간 (초)
+  Timer? _refreshCooldownTimer; // 쿨다운 타이머
+  DateTime? _cooldownStartTime; // 쿨다운 시작 시간
+  
+  // 자동 새로고침 관련
+  Timer? _autoRefreshTimer; // 자동 새로고침 타이머
+  bool _isAutoRefreshing = false; // 자동 새로고침 중인지
+  bool _isTabActive = true; // 탭이 활성화되어 있는지
+  int _autoRefreshCountdown = 60; // 다음 새로고침까지 남은 시간 (초)
+  Timer? _countdownTimer; // 카운트다운 타이머
 
   @override
   void initState() {
     super.initState();
+    // 애니메이션 컨트롤러 초기화
+    _refreshAnimationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
     // "내 주변" 탭이 기본 선택되므로 위치 요청
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndRequestLocationPermission();
     });
+    
+    // 1초마다 UI 업데이트 (카운트다운 표시용)
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          // setState를 호출하여 UI 리빌드 (카운트다운 업데이트)
+        });
+      }
+    });
+    
+    // 쿨다운 상태 복원
+    _restoreCooldownState();
+    
+    // 자동 새로고침 타이머 시작
+    _startAutoRefreshTimer();
+    
+    // 앱 생명주기 observer 등록
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Future<void> _checkAndRequestLocationPermission() async {
@@ -46,10 +87,229 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
   }
 
 
+  // 새로고침 쿨다운 시작 (2분 = 120초)
+  void _startRefreshCooldown() {
+    _isRefreshCooldown = true;
+    _refreshCooldownSeconds = 120; // 2분
+    _cooldownStartTime = DateTime.now();
+    
+    // 쿨다운 상태 저장
+    _saveCooldownState();
+    
+    _refreshCooldownTimer?.cancel();
+    _refreshCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_refreshCooldownSeconds > 0) {
+        setState(() {
+          _refreshCooldownSeconds--;
+        });
+        // 쿨다운 상태 업데이트 저장
+        _saveCooldownState();
+      } else {
+        setState(() {
+          _isRefreshCooldown = false;
+          _refreshCooldownSeconds = 0;
+          _cooldownStartTime = null;
+        });
+        // 쿨다운 완료 시 저장된 상태 삭제
+        _clearCooldownState();
+        timer.cancel();
+      }
+    });
+  }
+
+  // 남은 쿨다운 시간을 분:초 형식으로 포맷
+  String _formatCooldownTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes}분 ${remainingSeconds}초 후';
+  }
+
+  // 자동 새로고침 카운트다운 시간을 포맷
+  String _formatAutoRefreshCountdown(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  // 쿨다운 상태를 SharedPreferences에 저장
+  void _saveCooldownState() {
+    if (_cooldownStartTime != null) {
+      final prefs = SharedPreferences.getInstance();
+      prefs.then((prefs) {
+        prefs.setInt('refresh_cooldown_start', _cooldownStartTime!.millisecondsSinceEpoch);
+        prefs.setInt('refresh_cooldown_duration', 120); // 2분
+      });
+    }
+  }
+
+  // 저장된 쿨다운 상태 복원
+  void _restoreCooldownState() {
+    final prefs = SharedPreferences.getInstance();
+    prefs.then((prefs) {
+      final startTimeMs = prefs.getInt('refresh_cooldown_start');
+      final duration = prefs.getInt('refresh_cooldown_duration') ?? 120;
+      
+      if (startTimeMs != null) {
+        final startTime = DateTime.fromMillisecondsSinceEpoch(startTimeMs);
+        final now = DateTime.now();
+        final elapsed = now.difference(startTime).inSeconds;
+        final remaining = duration - elapsed;
+        
+        if (remaining > 0) {
+          // 아직 쿨다운이 남아있음
+          setState(() {
+            _isRefreshCooldown = true;
+            _refreshCooldownSeconds = remaining;
+            _cooldownStartTime = startTime;
+          });
+          
+          // 타이머 재시작
+          _refreshCooldownTimer?.cancel();
+          _refreshCooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            if (_refreshCooldownSeconds > 0) {
+              setState(() {
+                _refreshCooldownSeconds--;
+              });
+              _saveCooldownState();
+            } else {
+              setState(() {
+                _isRefreshCooldown = false;
+                _refreshCooldownSeconds = 0;
+                _cooldownStartTime = null;
+              });
+              _clearCooldownState();
+              timer.cancel();
+            }
+          });
+        } else {
+          // 쿨다운이 이미 완료됨
+          _clearCooldownState();
+        }
+      }
+    });
+  }
+
+  // 저장된 쿨다운 상태 삭제
+  void _clearCooldownState() {
+    final prefs = SharedPreferences.getInstance();
+    prefs.then((prefs) {
+      prefs.remove('refresh_cooldown_start');
+      prefs.remove('refresh_cooldown_duration');
+    });
+  }
+
+  // 자동 새로고침 타이머 시작 (1분 = 60초)
+  void _startAutoRefreshTimer() {
+    _autoRefreshTimer?.cancel();
+    _countdownTimer?.cancel();
+    
+    // 카운트다운 타이머 시작 (1초마다)
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isTabActive && !_isAutoRefreshing) {
+        setState(() {
+          _autoRefreshCountdown--;
+        });
+        
+        if (_autoRefreshCountdown <= 0) {
+          _performAutoRefresh();
+        }
+      }
+    });
+    
+    // 자동 새로고침 타이머 시작 (1분마다)
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
+      if (_isTabActive && !_isAutoRefreshing) {
+        _performAutoRefresh();
+      }
+    });
+  }
+
+  // 자동 새로고침 실행
+  Future<void> _performAutoRefresh() async {
+    if (_isAutoRefreshing) return;
+    
+    setState(() {
+      _isAutoRefreshing = true;
+    });
+    
+    // 새로고침 애니메이션 시작
+    _refreshAnimationController?.repeat();
+
+    try {
+      // 현재 반경 내 정류장들의 API 데이터 새로고침
+      final nearbyStopsList = ref.read(nearbyStopsListProvider);
+      for (final stop in nearbyStopsList) {
+        await ref.read(busArrivalProvider(stop.s.arsno).notifier).refresh();
+      }
+      print('🔄 자동 새로고침 완료: ${nearbyStopsList.length}개 정류장');
+    } catch (e) {
+      print('❌ 자동 새로고침 실패: $e');
+    } finally {
+      // 새로고침 애니메이션 정지
+      _refreshAnimationController?.stop();
+      _refreshAnimationController?.reset();
+      
+      setState(() {
+        _isAutoRefreshing = false;
+        _autoRefreshCountdown = 60; // 카운트다운 리셋
+      });
+    }
+  }
+
+  // 탭 활성화 상태 변경
+  void _setTabActive(bool isActive) {
+    if (_isTabActive != isActive) {
+      setState(() {
+        _isTabActive = isActive;
+      });
+      
+      if (isActive) {
+        // 탭이 활성화되면 자동 새로고침 타이머 재시작
+        setState(() {
+          _autoRefreshCountdown = 60; // 카운트다운 리셋
+        });
+        _startAutoRefreshTimer();
+      } else {
+        // 탭이 비활성화되면 타이머 정지
+        _autoRefreshTimer?.cancel();
+        _countdownTimer?.cancel();
+      }
+    }
+  }
+
+  // 앱 생명주기 변화 감지
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // 앱이 포그라운드로 돌아옴
+        _setTabActive(true);
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        // 앱이 백그라운드로 가거나 비활성화됨
+        _setTabActive(false);
+        break;
+      case AppLifecycleState.hidden:
+        // 앱이 숨겨짐
+        _setTabActive(false);
+        break;
+    }
+  }
+
   @override
   void dispose() {
+    _uiUpdateTimer?.cancel();
+    _refreshCooldownTimer?.cancel();
+    _autoRefreshTimer?.cancel();
+    _countdownTimer?.cancel();
     _searchController.dispose();
     _listScrollController.dispose();
+    _refreshAnimationController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -172,7 +432,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
                       child: DropdownButton<int>(
                         value: _selectedRadius,
                         underline: Container(),
-                        items: [100, 200, 300, 500, 1000].map((int radius) {
+                        items: [100, 200, 300, 500].map((int radius) {
                           return DropdownMenuItem<int>(
                             value: radius,
                             child: Text(
@@ -198,7 +458,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
                             // 반경 변경 시 모든 버스 도착 정보 API 재호출
                             final nearbyStopsList = ref.read(nearbyStopsListProvider);
                             for (final stop in nearbyStopsList) {
-                              ref.invalidate(busArrivalProvider(stop.s.arsno));
+                              ref.read(busArrivalProvider(stop.s.arsno).notifier).refresh();
                             }
                             print('🔄 반경 변경으로 인한 API 재호출: ${nearbyStopsList.length}개 정류장');
                           }
@@ -207,21 +467,46 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
                     ),
                     // 오른쪽: 새로고침 버튼
                     Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: IconButton(
-                        onPressed: () {
-                          // 현재 반경 내 정류장들의 API 데이터 새로고침
-                          final nearbyStopsList = ref.read(nearbyStopsListProvider);
-                          for (final stop in nearbyStopsList) {
-                            ref.invalidate(busArrivalProvider(stop.s.arsno));
-                          }
-                          print('🔄 새로고침 버튼으로 API 재호출: ${nearbyStopsList.length}개 정류장');
-                        },
-                        icon: const Icon(
-                          Icons.refresh,
-                          color: AppColors.accent,
-                          size: 28,
-                        ),
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 자동 새로고침 카운트다운 표시
+                          if (!_isAutoRefreshing) ...[
+                            Text(
+                              _formatAutoRefreshCountdown(_autoRefreshCountdown),
+                              style: const TextStyle(
+                                fontFamily: 'Dongle',
+                                fontSize: 16,
+                                color: AppColors.accent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                          // 새로고침 버튼 (자동 새로고침 중일 때는 비활성화)
+                          IconButton(
+                            onPressed: null, // 수동 새로고침 비활성화
+                            icon: _refreshAnimationController != null
+                                ? AnimatedBuilder(
+                                    animation: _refreshAnimationController!,
+                                    builder: (context, child) {
+                                      return Transform.rotate(
+                                        angle: _refreshAnimationController!.value * 2.0 * 3.14159,
+                                        child: Icon(
+                                          Icons.refresh,
+                                          color: AppColors.accent,
+                                          size: 28,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Icon(
+                                    Icons.refresh,
+                                    color: AppColors.accent,
+                                    size: 28,
+                                  ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -276,7 +561,6 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
   }
 
   Set<Marker> _buildMarkers(List<({Stop s, int m})> nearbyStops) {
-    print('🗺️ 지도 마커 생성: ${nearbyStops.length}개 정류장 (반경: ${_selectedRadius}m)');
     return nearbyStops.map((item) {
       return Marker(
         markerId: MarkerId(item.s.id),
@@ -356,7 +640,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.s.name,
+                          '${item.s.name} (${item.s.id})',
                           style: const TextStyle(fontFamily: 'Dongle', fontSize: 24),
                         ),
                         const SizedBox(height: 4),
@@ -428,7 +712,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      arrival.arrivalMessage,
+                      arrival.currentArrivalMessage,
                       style: const TextStyle(
                         fontFamily: 'Dongle',
                         fontSize: 18,
@@ -674,4 +958,5 @@ class _StopsScreenState extends ConsumerState<StopsScreen> {
       },
     );
   }
+
 }
