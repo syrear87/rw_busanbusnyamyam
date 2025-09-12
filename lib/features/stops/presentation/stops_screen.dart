@@ -1132,7 +1132,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
 
   // 도착시간을 메시지로 포맷
   String _formatArrivalMessage(String min1) {
-    if (min1.isEmpty) return '';
+    if (min1.isEmpty) return '도착정보 없음';
 
     // "곧 도착"인 경우
     if (min1 == '곧 도착') return '곧 도착';

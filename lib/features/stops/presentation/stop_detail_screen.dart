@@ -527,46 +527,78 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 첫 번째 도착 정보
-                  Row(
-                    children: [
-                      // 도착 시간과 정류장 정보를 하나의 텍스트로
-                      Expanded(
-                        child: Text(
-                          '${arrival.min1}분 후 · ${arrival.station1}정류장 전',
-                          style: const TextStyle(
-                            fontFamily: 'Dongle',
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
+                  // 도착 정보 표시
+                  if (arrival.min1.isEmpty && arrival.min2.isEmpty) ...[
+                    // 도착 정보가 없는 경우
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '도착정보 없음',
+                            style: const TextStyle(
+                              fontFamily: 'Dongle',
+                              fontSize: 16,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      // 저상버스 아이콘
-                      if (isLowFloor) ...[
-                        const SizedBox(width: 4),
-                        Image.asset(
-                          'assets/images/low_floor_bus.png',
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.contain,
-                        ),
+                        // 저상버스 아이콘
+                        if (isLowFloor) ...[
+                          const SizedBox(width: 4),
+                          Image.asset(
+                            'assets/images/low_floor_bus.png',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.contain,
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-
-                  // 두 번째 도착 정보 (작은 텍스트로)
-                  if (arrival.min2.isNotEmpty &&
-                      arrival.station2.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '다음 ${arrival.min2}분 후 · ${arrival.station2}정류장 전',
-                      style: const TextStyle(
-                        fontFamily: 'Dongle',
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
                     ),
+                  ] else ...[
+                    // 첫 번째 도착 정보
+                    Row(
+                      children: [
+                        // 도착 시간과 정류장 정보를 하나의 텍스트로
+                        Expanded(
+                          child: Text(
+                            arrival.min1.isNotEmpty
+                                ? '${arrival.min1}분 후 · ${arrival.station1}정류장 전'
+                                : '도착정보 없음',
+                            style: const TextStyle(
+                              fontFamily: 'Dongle',
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        // 저상버스 아이콘
+                        if (isLowFloor) ...[
+                          const SizedBox(width: 4),
+                          Image.asset(
+                            'assets/images/low_floor_bus.png',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.contain,
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    // 두 번째 도착 정보 (작은 텍스트로)
+                    if (arrival.min2.isNotEmpty &&
+                        arrival.station2.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '다음 ${arrival.min2}분 후 · ${arrival.station2}정류장 전',
+                        style: const TextStyle(
+                          fontFamily: 'Dongle',
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),
