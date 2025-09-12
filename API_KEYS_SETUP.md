@@ -18,6 +18,8 @@
 static const String bisServiceKey = '실제_서비스_키_입력';
 ```
 
+> **참고**: Google Maps API 키는 Dart 코드에서 직접 사용되지 않으며, 각 플랫폼별 설정 파일에서 관리됩니다.
+
 ## 2. Google Maps API 키
 
 ### 발급 방법
@@ -40,10 +42,10 @@ MAPS_ANDROID_KEY=실제_Android_API_키_입력
 ```
 
 #### iOS
-`ios/Runner/Config.xcconfig` 파일에서 `GOOGLE_MAPS_IOS_KEY` 값을 설정하세요.
+`ios/Runner/Config.xcconfig` 파일에서 `GMS_API_KEY` 값을 설정하세요.
 
 ```
-GOOGLE_MAPS_IOS_KEY = 실제_iOS_API_키_입력
+GMS_API_KEY = 실제_iOS_API_키_입력
 ```
 
 ## 보안 주의사항
