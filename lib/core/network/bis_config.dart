@@ -7,9 +7,11 @@ class BisConfig {
   static String get key {
     // 1. dart-define에서 먼저 확인 (우선순위)
     if (_env.isNotEmpty) {
+      print('🔑 BIS API 키: dart-define에서 가져옴 (길이: ${_env.length})');
       return _env.contains('%') ? Uri.decodeComponent(_env) : _env;
     }
     // 2. 공통 파일에서 가져오기
+    print('🔑 BIS API 키: ApiKeys 파일에서 가져옴 (길이: ${ApiKeys.bisServiceKey.length})');
     return ApiKeys.bisServiceKey;
   }
 
