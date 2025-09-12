@@ -1,0 +1,16 @@
+# Windows용 local.properties 템플릿
+# 이 파일을 local.properties로 복사하고 실제 경로로 수정하세요
+
+# Android SDK 경로 (Windows)
+sdk.dir=C:\\Users\\[사용자명]\\AppData\\Local\\Android\\Sdk
+
+# Flutter SDK 경로 (Windows)
+flutter.sdk=C:\\Users\\[사용자명]\\flutter
+
+# Flutter 빌드 설정
+flutter.buildMode=debug
+flutter.versionName=1.0.0
+flutter.versionCode=1
+
+# Google Maps API 키
+MAPS_ANDROID_KEY=AIzaSyBFDK6Fk7DqHFvDRU-9pZ3UKiM-I0uCSVY

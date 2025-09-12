@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -7,6 +6,7 @@ import '../../features/stops/presentation/stop_detail_screen.dart';
 import '../../features/routes/presentation/routes_screen.dart';
 import '../../features/nyamnyam/presentation/nyamnyam_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/webview/presentation/webview_screen.dart';
 import 'app_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -25,15 +25,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/stops',
             builder: (context, state) => const StopsScreen(),
-            routes: [
-              GoRoute(
-                path: ':id',
-                builder: (context, state) {
-                  final stopId = state.pathParameters['id']!;
-                  return StopDetailScreen(stopId: stopId);
-                },
-              ),
-            ],
           ),
           GoRoute(
             path: '/routes',
@@ -48,6 +39,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SettingsScreen(),
           ),
         ],
+      ),
+      // 정류장 상세 페이지 (Shell 밖에 배치하여 하단 탭바 숨김)
+      GoRoute(
+        path: '/stops/:id',
+        builder: (context, state) => const StopDetailScreen(),
+      ),
+      // 웹뷰 페이지 (Shell 밖에 배치하여 독립적인 화면으로 표시)
+      GoRoute(
+        path: '/webview',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return WebViewScreen(
+            url: extra?['url'] as String? ?? '',
+            title: extra?['title'] as String? ?? '웹페이지',
+            returnPath: extra?['returnPath'] as String?,
+          );
+        },
       ),
     ],
   );

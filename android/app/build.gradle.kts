@@ -39,7 +39,7 @@ android {
             lp.load(FileInputStream(lpf))
         }
         val mapsKey = lp.getProperty("MAPS_ANDROID_KEY") ?: System.getenv("MAPS_ANDROID_KEY") ?: ""
-        manifestPlaceholders["MAPS_API_KEY"] = mapsKey
+        manifestPlaceholders["MAPS_ANDROID_KEY"] = mapsKey
     }
 
     buildTypes {
