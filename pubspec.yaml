@@ -85,6 +85,8 @@ flutter:
     - assets/data/busan_stops.json
     - assets/images/bus_stop.png
     - assets/images/low_floor_bus.png
+    - assets/mock/nyam_FD6.json
+    - assets/mock/nyam_CE7.json
   fonts:
     - family: Dongle
       fonts:

@@ -1,0 +1,55 @@
+{
+  "documents": [
+    {
+      "id": "FD6_001",
+      "place_name": "봉우아파트 김밥천국",
+      "place_url": "https://map.kakao.com/?itemId=FD6_001",
+      "category_group_code": "FD6",
+      "x": "129.091203",
+      "y": "35.254292",
+      "distance": "220",
+      "road_address_name": "부산 금정구 부산대학로 1"
+    },
+    {
+      "id": "FD6_002",
+      "place_name": "부산대 앞 돼지국밥",
+      "place_url": "https://map.kakao.com/?itemId=FD6_002",
+      "category_group_code": "FD6",
+      "x": "129.090120",
+      "y": "35.253900",
+      "distance": "360",
+      "address_name": "부산 금정구 장전동 123-4"
+    },
+    {
+      "id": "FD6_003",
+      "place_name": "해운대 해물탕 전문점",
+      "place_url": "https://map.kakao.com/?itemId=FD6_003",
+      "category_group_code": "FD6",
+      "x": "129.165000",
+      "y": "35.158000",
+      "distance": "150",
+      "road_address_name": "부산 해운대구 해운대로 123"
+    },
+    {
+      "id": "FD6_004",
+      "place_name": "서면 맛집 골목",
+      "place_url": "https://map.kakao.com/?itemId=FD6_004",
+      "category_group_code": "FD6",
+      "x": "129.055000",
+      "y": "35.157000",
+      "distance": "280",
+      "road_address_name": "부산 부산진구 서면로 456"
+    },
+    {
+      "id": "FD6_005",
+      "place_name": "남포동 회센터",
+      "place_url": "https://map.kakao.com/?itemId=FD6_005",
+      "category_group_code": "FD6",
+      "x": "129.030000",
+      "y": "35.097000",
+      "distance": "190",
+      "road_address_name": "부산 중구 남포동 789"
+    }
+  ]
+}
+
