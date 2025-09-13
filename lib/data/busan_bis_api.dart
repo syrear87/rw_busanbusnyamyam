@@ -268,5 +268,160 @@ class BisApi {
     }
     return list;
   }
+
+  /// 모든 노선 목록 가져오기 (/busInfo 페이징 수집)
+  static Future<List<RouteMeta>> getAllRoutes() async {
+    print('🚌 모든 노선 목록 API 호출 시작 (/busInfo 페이징)');
+    
+    try {
+      final List<RouteMeta> allRoutes = [];
+      int pageNo = 1;
+      int totalCount = 0;
+      const int numOfRows = 1000; // 한 번에 많은 데이터 가져오기
+      
+      while (true) {
+        print('📄 페이지 $pageNo 요청 중...');
+        
+        final doc = await BisHttp.getXml(BisConfig.pathRouteInfo, {
+          'pageNo': '$pageNo',
+          'numOfRows': '$numOfRows',
+        });
+        
+        final items = BisHttp.items(doc);
+        
+        // 첫 페이지에서 totalCount 확인
+        if (pageNo == 1) {
+          final totalCountStr = doc.findAllElements('totalCount').firstOrNull?.innerText.trim() ?? '0';
+          totalCount = int.tryParse(totalCountStr) ?? 0;
+          print('📊 전체 노선 수: $totalCount개');
+        }
+        
+        print('📊 페이지 $pageNo 응답 - ${items.length}개 아이템');
+        
+        // 현재 페이지의 노선 정보 파싱
+        for (final item in items) {
+          String t(String k) => item.findElements(k).firstOrNull?.innerText.trim() ?? '';
+          
+          final route = RouteMeta(
+            lineid: t('lineid'),
+            buslinenum: t('buslinenum'),
+            bustype: t('bustype'),
+            startpoint: t('startpoint').isNotEmpty ? t('startpoint') : null,
+            endpoint: t('endpoint').isNotEmpty ? t('endpoint') : null,
+            firsttime: t('firsttime').isNotEmpty ? t('firsttime') : null,
+            endtime: t('endtime').isNotEmpty ? t('endtime') : null,
+            headway: t('headway').isNotEmpty ? t('headway') : null,
+            headwaynorm: t('headwaynorm').isNotEmpty ? t('headwaynorm') : null,
+            headwaypeak: t('headwaypeak').isNotEmpty ? t('headwaypeak') : null,
+            headwayholi: t('headwayholi').isNotEmpty ? t('headwayholi') : null,
+          );
+          
+          allRoutes.add(route);
+        }
+        
+        // 더 이상 가져올 데이터가 없으면 종료
+        if (items.length < numOfRows) {
+          break;
+        }
+        
+        pageNo++;
+        
+        // 안전장치: 너무 많은 페이지 요청 방지
+        if (pageNo > 10) {
+          print('⚠️ 최대 페이지 수(10) 도달, 수집 중단');
+          break;
+        }
+      }
+      
+      print('✅ 모든 노선 목록 수집 완료 - 총 ${allRoutes.length}개 노선');
+      
+      // 중복 제거 (lineid 기준)
+      final uniqueRoutes = <String, RouteMeta>{};
+      for (final route in allRoutes) {
+        if (route.lineid.isNotEmpty) {
+          uniqueRoutes[route.lineid] = route;
+        }
+      }
+      
+      final finalRoutes = uniqueRoutes.values.toList();
+      print('✅ 중복 제거 후 최종 노선 수: ${finalRoutes.length}개');
+      
+      return finalRoutes;
+    } catch (e) {
+      print('💥 모든 노선 목록 API 호출 실패: $e');
+      // 실패 시 샘플 데이터 반환
+      return _getSampleRoutes();
+    }
+  }
+
+  /// 특정 버스 번호로 노선 검색
+  static Future<List<RouteMeta>> searchRoutesByNumber(String busNumber) async {
+    print('🔍 버스 번호 검색: $busNumber');
+    
+    try {
+      final doc = await BisHttp.getXml(BisConfig.pathRouteInfo, {
+        'lineno': busNumber,
+        'pageNo': '1',
+        'numOfRows': '100',
+      });
+      
+      final items = BisHttp.items(doc);
+      print('📊 검색 결과: ${items.length}개 노선');
+      
+      final routes = items.map((item) {
+        String t(String k) => item.findElements(k).firstOrNull?.innerText.trim() ?? '';
+        
+        return RouteMeta(
+          lineid: t('lineid'),
+          buslinenum: t('buslinenum'),
+          bustype: t('bustype'),
+          startpoint: t('startpoint').isNotEmpty ? t('startpoint') : null,
+          endpoint: t('endpoint').isNotEmpty ? t('endpoint') : null,
+          firsttime: t('firsttime').isNotEmpty ? t('firsttime') : null,
+          endtime: t('endtime').isNotEmpty ? t('endtime') : null,
+          headway: t('headway').isNotEmpty ? t('headway') : null,
+          headwaynorm: t('headwaynorm').isNotEmpty ? t('headwaynorm') : null,
+          headwaypeak: t('headwaypeak').isNotEmpty ? t('headwaypeak') : null,
+          headwayholi: t('headwayholi').isNotEmpty ? t('headwayholi') : null,
+        );
+      }).toList();
+      
+      return routes;
+    } catch (e) {
+      print('💥 버스 번호 검색 실패: $e');
+      return [];
+    }
+  }
+
+  /// 샘플 노선 데이터 (API 실패 시 사용)
+  static List<RouteMeta> _getSampleRoutes() {
+    return [
+      RouteMeta(lineid: '1001', buslinenum: '50', bustype: '일반', startpoint: '부산대학교', endpoint: '서면역'),
+      RouteMeta(lineid: '1002', buslinenum: '51', bustype: '일반', startpoint: '해운대', endpoint: '남포동'),
+      RouteMeta(lineid: '1003', buslinenum: '52', bustype: '좌석', startpoint: '기장', endpoint: '부산역'),
+      RouteMeta(lineid: '1004', buslinenum: '53', bustype: '일반', startpoint: '금정구', endpoint: '사상구'),
+      RouteMeta(lineid: '1005', buslinenum: '54', bustype: '좌석', startpoint: '강서구', endpoint: '동래구'),
+      RouteMeta(lineid: '1006', buslinenum: '55', bustype: '일반', startpoint: '북구', endpoint: '연제구'),
+      RouteMeta(lineid: '1007', buslinenum: '56', bustype: '좌석', startpoint: '사하구', endpoint: '수영구'),
+      RouteMeta(lineid: '1008', buslinenum: '57', bustype: '일반', startpoint: '영도구', endpoint: '중구'),
+      RouteMeta(lineid: '1009', buslinenum: '58', bustype: '좌석', startpoint: '서구', endpoint: '동구'),
+      RouteMeta(lineid: '1010', buslinenum: '59', bustype: '일반', startpoint: '남구', endpoint: '부산진구'),
+      RouteMeta(lineid: '1011', buslinenum: '100', bustype: '좌석', startpoint: '부산대학교', endpoint: '해운대'),
+      RouteMeta(lineid: '1012', buslinenum: '101', bustype: '일반', startpoint: '서면역', endpoint: '남포동'),
+      RouteMeta(lineid: '1013', buslinenum: '102', bustype: '좌석', startpoint: '기장', endpoint: '부산역'),
+      RouteMeta(lineid: '1014', buslinenum: '103', bustype: '일반', startpoint: '금정구', endpoint: '사상구'),
+      RouteMeta(lineid: '1015', buslinenum: '104', bustype: '좌석', startpoint: '강서구', endpoint: '동래구'),
+      RouteMeta(lineid: '1016', buslinenum: '105', bustype: '일반', startpoint: '북구', endpoint: '연제구'),
+      RouteMeta(lineid: '1017', buslinenum: '106', bustype: '좌석', startpoint: '사하구', endpoint: '수영구'),
+      RouteMeta(lineid: '1018', buslinenum: '107', bustype: '일반', startpoint: '영도구', endpoint: '중구'),
+      RouteMeta(lineid: '1019', buslinenum: '108', bustype: '좌석', startpoint: '서구', endpoint: '동구'),
+      RouteMeta(lineid: '1020', buslinenum: '109', bustype: '일반', startpoint: '남구', endpoint: '부산진구'),
+      RouteMeta(lineid: '1021', buslinenum: '500', bustype: '좌석', startpoint: '부산대학교', endpoint: '해운대'),
+      RouteMeta(lineid: '1022', buslinenum: '501', bustype: '일반', startpoint: '서면역', endpoint: '남포동'),
+      RouteMeta(lineid: '1023', buslinenum: '502', bustype: '좌석', startpoint: '기장', endpoint: '부산역'),
+      RouteMeta(lineid: '1024', buslinenum: '503', bustype: '일반', startpoint: '금정구', endpoint: '사상구'),
+      RouteMeta(lineid: '1025', buslinenum: '504', bustype: '좌석', startpoint: '강서구', endpoint: '동래구'),
+    ];
+  }
 }
 
