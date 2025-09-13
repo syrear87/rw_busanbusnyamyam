@@ -33,7 +33,7 @@ class AppTheme {
         foregroundColor: AppColors.accent,
         titleTextStyle: TextStyle(
           fontFamily: 'Dongle',
-          fontSize: 28,
+          fontSize: 31,
           color: AppColors.accent,
         ),
       ),
@@ -73,7 +73,7 @@ class AppTheme {
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 18,
+            fontSize: 21,
             color: AppColors.accent,
           ),
         ),

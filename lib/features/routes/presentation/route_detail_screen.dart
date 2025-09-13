@@ -250,7 +250,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
           '$lineno번 노선',
           style: const TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 24,
+            fontSize: 27,
             color: AppColors.accent,
             fontWeight: FontWeight.bold,
           ),
@@ -352,7 +352,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                 '정류장 정보를 불러오는 중...',
                 style: TextStyle(
                   fontFamily: 'Dongle',
-                  fontSize: 16,
+                  fontSize: 19,
                   color: Colors.grey,
                 ),
               ),
@@ -387,7 +387,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '정류장 정보를 불러올 수 없습니다',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 18,
+                fontSize: 21,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),
@@ -397,7 +397,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               error,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 14,
+                fontSize: 17,
                 color: Colors.grey,
               ),
               textAlign: TextAlign.center,
@@ -429,7 +429,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
             '정류장 정보가 없습니다',
             style: TextStyle(
               fontFamily: 'Dongle',
-              fontSize: 18,
+              fontSize: 21,
               color: Colors.grey,
             ),
           ),
@@ -470,7 +470,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                   '정류장 목록',
                   style: TextStyle(
                     fontFamily: 'Dongle',
-                    fontSize: 18,
+                    fontSize: 21,
                     color: AppColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
@@ -518,7 +518,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                   '${index + 1}',
                   style: const TextStyle(
                     fontFamily: 'Dongle',
-                    fontSize: 10,
+                    fontSize: 13,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -551,7 +551,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                         stop.nodenm,
                         style: const TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 16,
+                          fontSize: 19,
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
@@ -562,7 +562,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                           'ARS: ${stop.arsno}',
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 12,
+                            fontSize: 15,
                             color: Colors.grey,
                           ),
                         ),
@@ -592,7 +592,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
                           stop.carno!,
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 10,
+                            fontSize: 13,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -692,7 +692,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '노선 정보를 불러올 수 없습니다',
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                          fontSize: 19,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),
@@ -736,7 +736,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '🚌 노선 상세 정보',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 18,
+                fontSize: 21,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -783,7 +783,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '$label:',
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                          fontSize: 19,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -794,7 +794,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               value,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                          fontSize: 19,
                 color: AppColors.text,
               ),
             ),
@@ -829,7 +829,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
             '0:${_countdownSeconds.toString().padLeft(2, '0')}',
             style: const TextStyle(
               fontFamily: 'Dongle',
-              fontSize: 16,
+                          fontSize: 19,
               color: AppColors.accent,
               fontWeight: FontWeight.bold,
             ),

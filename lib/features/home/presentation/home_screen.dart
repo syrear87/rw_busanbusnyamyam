@@ -11,6 +11,11 @@ import '../../stops/data/bus_arrival_model.dart';
 import '../../routes/presentation/route_detail_screen.dart';
 import '../../../../data/busan_bis_api.dart';
 
+// 노선 정보를 위한 Provider
+final routeInfoProvider = FutureProvider.family<RouteMeta?, String>((ref, lineid) {
+  return BisApi.routeInfo(lineid);
+});
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -122,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               '⭐ 즐겨찾는 정류장',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 20,
+                fontSize: 23,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -258,7 +263,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           stop.name,
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 16,
+                            fontSize: 19,
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
@@ -269,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             'ARS: ${stop.arsno}',
                             style: const TextStyle(
                               fontFamily: 'Dongle',
-                              fontSize: 12,
+                              fontSize: 15,
                               color: Colors.grey,
                             ),
                           ),
@@ -301,7 +306,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         '도착 정보 없음',
                         style: TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 14,
+                          fontSize: 17,
                           color: Colors.grey,
                         ),
                       );
@@ -334,7 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 arrival.lineno,
                                 style: const TextStyle(
                                   fontFamily: 'Dongle',
-                                  fontSize: 12,
+                                  fontSize: 15,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -348,7 +353,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                       : '도착정보 없음',
                                   style: const TextStyle(
                                     fontFamily: 'Dongle',
-                                    fontSize: 12,
+                                    fontSize: 15,
                                     color: Colors.black,
                                   ),
                                 ),
@@ -373,7 +378,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     '도착 정보 로딩 중...',
                     style: TextStyle(
                       fontFamily: 'Dongle',
-                      fontSize: 14,
+                      fontSize: 17,
                       color: Colors.grey,
                     ),
                   ),
@@ -381,7 +386,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     '도착 정보 오류',
                     style: TextStyle(
                       fontFamily: 'Dongle',
-                      fontSize: 14,
+                      fontSize: 17,
                       color: Colors.red,
                     ),
                   ),
@@ -410,78 +415,146 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ],
         border: Border.all(color: AppColors.accent),
       ),
-      child: FutureBuilder<RouteMeta?>(
-        future: BisApi.routeInfo(lineid),
-        builder: (context, snapshot) {
-          final routeMeta = snapshot.data;
-          final busNumber = routeMeta?.lineno ?? lineid;
+      child: Consumer(
+        builder: (context, ref, child) {
+          final routeInfoAsync = ref.watch(routeInfoProvider(lineid));
           
-          return ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.directions_bus,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              '${busNumber}번 노선',
-              style: const TextStyle(
-                fontFamily: 'Dongle',
-                fontSize: 16,
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (routeMeta?.startpoint != null || routeMeta?.endpoint != null) ...[
-                  Text(
-                    '${routeMeta?.startpoint ?? '-'} ↔ ${routeMeta?.endpoint ?? '-'}',
-                    style: const TextStyle(
-                      fontFamily: 'Dongle',
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+          return routeInfoAsync.when(
+            data: (routeMeta) {
+              final busNumber = routeMeta?.lineno ?? lineid;
+              
+              return ListTile(
+                contentPadding: const EdgeInsets.all(16),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-                Text(
-                  '노선 ID: $lineid',
-                  style: const TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 12,
-                    color: Colors.grey,
+                  child: const Icon(
+                    Icons.directions_bus,
+                    color: Colors.white,
+                    size: 20,
                   ),
                 ),
-              ],
-            ),
-            trailing: IconButton(
-              onPressed: () {
-                ref
-                    .read(favoriteRoutesProvider.notifier)
-                    .toggleFavorite(lineid);
-              },
-              icon: const Icon(
-                Icons.star,
-                color: Colors.amber,
-              ),
-            ),
-            onTap: () {
-              context.go(
-                '/routes/$lineid',
-                extra: {
-                  'lineno': busNumber,
-                  'bustype': '',
+                title: Text(
+                  '${busNumber}번 노선',
+                  style: const TextStyle(
+                    fontFamily: 'Dongle',
+                    fontSize: 19,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (routeMeta?.startpoint != null || routeMeta?.endpoint != null) ...[
+                      Text(
+                        '${routeMeta?.startpoint ?? '-'} ↔ ${routeMeta?.endpoint ?? '-'}',
+                        style: const TextStyle(
+                          fontFamily: 'Dongle',
+                          fontSize: 15,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                    Text(
+                      '노선 ID: $lineid',
+                      style: const TextStyle(
+                        fontFamily: 'Dongle',
+                        fontSize: 15,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: IconButton(
+                  onPressed: () {
+                    ref
+                        .read(favoriteRoutesProvider.notifier)
+                        .toggleFavorite(lineid);
+                  },
+                  icon: const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                ),
+                onTap: () {
+                  context.go(
+                    '/routes/$lineid',
+                    extra: {
+                      'lineno': busNumber,
+                      'bustype': '',
+                    },
+                  );
                 },
               );
             },
+            loading: () => ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.directions_bus,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                '노선 정보 로딩 중...',
+                style: const TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 19,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                '노선 ID: $lineid',
+                style: const TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            error: (error, stackTrace) => ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.error,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                '노선 정보 오류',
+                style: const TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 19,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                '노선 ID: $lineid',
+                style: const TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 15,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -498,7 +571,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           '0:${_countdownSeconds.toString().padLeft(2, '0')}',
           style: const TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 16,
+            fontSize: 19,
             color: AppColors.accent,
             fontWeight: FontWeight.bold,
           ),
@@ -542,7 +615,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               title,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                fontSize: 19,
                 color: Colors.grey,
                 fontWeight: FontWeight.bold,
               ),
@@ -581,7 +654,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               '로딩 중...',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                fontSize: 19,
                 color: Colors.grey,
               ),
             ),
@@ -613,7 +686,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               message,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                fontSize: 19,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),

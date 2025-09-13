@@ -496,7 +496,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                                   : '${radius}m',
                               style: const TextStyle(
                                 fontFamily: 'Dongle',
-                                fontSize: 24,
+                                fontSize: 27,
                                 color: AppColors.accent,
                               ),
                             ),
@@ -545,7 +545,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                               ),
                               style: const TextStyle(
                                 fontFamily: 'Dongle',
-                                fontSize: 16,
+                                fontSize: 19,
                                 color: AppColors.accent,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -609,7 +609,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
             '지도 일시정지',
             style: TextStyle(
               fontFamily: 'Dongle',
-              fontSize: 18,
+              fontSize: 21,
               color: Colors.grey,
             ),
           ),
@@ -702,7 +702,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           '주변에 정류장이 없습니다',
           style: TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 18,
+            fontSize: 21,
             color: AppColors.accent,
           ),
         ),
@@ -756,7 +756,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                           '${item.s.name} (${item.s.id})',
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 24,
+                            fontSize: 27,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -764,7 +764,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                           '${item.m} m',
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 18,
+                            fontSize: 21,
                           ),
                         ),
                       ],
@@ -791,7 +791,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
             '도착 정보 없음',
             style: TextStyle(
               fontFamily: 'Dongle',
-              fontSize: 18,
+              fontSize: 21,
               color: Colors.grey,
             ),
           );
@@ -824,7 +824,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                         arrival.lineno,
                         style: const TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 18,
+                          fontSize: 21,
                           color: Colors.white,
                         ),
                       ),
@@ -834,7 +834,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                       _formatArrivalMessage(arrival.min1),
                       style: const TextStyle(
                         fontFamily: 'Dongle',
-                        fontSize: 18,
+                        fontSize: 21,
                         color: AppColors.text,
                       ),
                     ),
@@ -860,13 +860,13 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
         '도착 정보 로딩 중...',
         style: TextStyle(
           fontFamily: 'Dongle',
-          fontSize: 18,
+                            fontSize: 21,
           color: Colors.grey,
         ),
       ),
       error: (error, stack) => const Text(
         '도착 정보 오류',
-        style: TextStyle(fontFamily: 'Dongle', fontSize: 18, color: Colors.red),
+        style: TextStyle(fontFamily: 'Dongle', fontSize: 21, color: Colors.red),
       ),
     );
   }
@@ -895,7 +895,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                     '위치 권한이 필요합니다',
                     style: TextStyle(
                       fontFamily: 'Dongle',
-                      fontSize: 20,
+                      fontSize: 23,
                       color: AppColors.accent,
                     ),
                   ),
@@ -905,7 +905,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: 'Dongle',
-                      fontSize: 16,
+                      fontSize: 19,
                       color: Colors.grey,
                     ),
                   ),
@@ -931,7 +931,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                               '위치 권한 허용',
                               style: TextStyle(
                                 fontFamily: 'Dongle',
-                                fontSize: 16,
+                                fontSize: 19,
                               ),
                             ),
                           ),
@@ -954,7 +954,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                             '설정에서 권한 허용',
                             style: TextStyle(
                               fontFamily: 'Dongle',
-                              fontSize: 16,
+                              fontSize: 19,
                             ),
                           ),
                         ),
@@ -974,7 +974,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                             '새로고침',
                             style: TextStyle(
                               fontFamily: 'Dongle',
-                              fontSize: 14,
+                              fontSize: 17,
                               color: Colors.grey,
                             ),
                           ),
@@ -1014,14 +1014,14 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
             controller: _searchController,
             decoration: const InputDecoration(
               hintText: '정류장명 또는 ID 검색',
-              hintStyle: TextStyle(fontFamily: 'Dongle', fontSize: 16),
+              hintStyle: TextStyle(fontFamily: 'Dongle', fontSize: 19),
               border: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: AppColors.accent),
               ),
               prefixIcon: Icon(Icons.search, color: AppColors.accent),
             ),
-            style: const TextStyle(fontFamily: 'Dongle', fontSize: 16),
+            style: const TextStyle(fontFamily: 'Dongle', fontSize: 19),
             onChanged: (value) {
               // 300ms 디바운스
               Future.delayed(const Duration(milliseconds: 300), () {
@@ -1048,7 +1048,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           '검색어를 입력해주세요',
           style: TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 18,
+            fontSize: 21,
             color: AppColors.accent,
           ),
         ),
@@ -1061,7 +1061,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           '"$query"에 대한 검색 결과가 없습니다',
           style: const TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 18,
+            fontSize: 21,
             color: AppColors.accent,
           ),
         ),
@@ -1078,11 +1078,11 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           child: ListTile(
             title: Text(
               stop.name,
-              style: const TextStyle(fontFamily: 'Dongle', fontSize: 18),
+              style: const TextStyle(fontFamily: 'Dongle', fontSize: 21),
             ),
             subtitle: Text(
               'ID: ${stop.id} | ARS: ${stop.arsno}',
-              style: const TextStyle(fontFamily: 'Dongle', fontSize: 14),
+              style: const TextStyle(fontFamily: 'Dongle', fontSize: 17),
             ),
             onTap: () {
               // 상세페이지로 이동하기 전에 지도 정지

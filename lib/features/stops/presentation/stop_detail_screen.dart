@@ -171,7 +171,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
           stopMeta.bstopnm,
           style: const TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 24,
+            fontSize: 27,
             color: AppColors.accent,
             fontWeight: FontWeight.bold,
           ),
@@ -253,7 +253,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                   '📍 정류장 정보',
                   style: TextStyle(
                     fontFamily: 'Dongle',
-                    fontSize: 18,
+                    fontSize: 21,
                     color: AppColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
@@ -272,7 +272,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                       '${distance}m',
                       style: const TextStyle(
                         fontFamily: 'Dongle',
-                        fontSize: 14,
+                        fontSize: 17,
                         color: AppColors.accent,
                         fontWeight: FontWeight.bold,
                       ),
@@ -313,7 +313,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                     '데이터 출처: 부산버스정보시스템(OpenAPI)',
                     style: TextStyle(
                       fontFamily: 'Dongle',
-                      fontSize: 12,
+                      fontSize: 15,
                       color: Colors.blue,
                     ),
                   ),
@@ -326,7 +326,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                         '마지막 업데이트 ${time.toString().substring(11, 19)}',
                         style: const TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 12,
+                          fontSize: 15,
                           color: Colors.grey,
                         ),
                       ),
@@ -334,7 +334,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                         '업데이트 중...',
                         style: TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 12,
+                          fontSize: 15,
                           color: Colors.grey,
                         ),
                       ),
@@ -342,7 +342,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                         '업데이트 실패',
                         style: TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 12,
+                          fontSize: 15,
                           color: Colors.grey,
                         ),
                       ),
@@ -370,7 +370,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
               '$label:',
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                fontSize: 19,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -381,7 +381,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
               value,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 16,
+                fontSize: 19,
                 color: AppColors.text,
               ),
             ),
@@ -525,7 +525,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                   arrival.lineno,
                   style: const TextStyle(
                     fontFamily: 'Dongle',
-                    fontSize: 16,
+                    fontSize: 19,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -546,7 +546,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                               '도착정보 없음',
                               style: const TextStyle(
                                 fontFamily: 'Dongle',
-                                fontSize: 16,
+                                fontSize: 19,
                                 color: Colors.grey,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -574,7 +574,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                                   : '도착정보 없음',
                               style: const TextStyle(
                                 fontFamily: 'Dongle',
-                                fontSize: 16,
+                                fontSize: 19,
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -599,7 +599,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                           '다음 ${arrival.min2}분 후 · ${arrival.station2}정류장 전',
                           style: const TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 12,
+                            fontSize: 15,
                             color: Colors.grey,
                           ),
                         ),
@@ -740,7 +740,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
                 'BIS 응답 지연. 잠시 후 다시 시도해 주세요',
                 style: TextStyle(
                   fontFamily: 'Dongle',
-                  fontSize: 16,
+                  fontSize: 19,
                   color: Colors.orange,
                 ),
               ),
@@ -763,7 +763,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
             '0:${_countdownSeconds.toString().padLeft(2, '0')}',
             style: const TextStyle(
               fontFamily: 'Dongle',
-              fontSize: 16,
+                                fontSize: 19,
               color: AppColors.accent,
               fontWeight: FontWeight.bold,
             ),

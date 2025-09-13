@@ -90,7 +90,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           widget.title,
           style: const TextStyle(
             fontFamily: 'Dongle',
-            fontSize: 20,
+            fontSize: 23,
             color: AppColors.accent,
             fontWeight: FontWeight.bold,
           ),
@@ -151,7 +151,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                             '페이지 로딩 중...',
                             style: TextStyle(
                               fontFamily: 'Dongle',
-                              fontSize: 16,
+                              fontSize: 19,
                               color: AppColors.accent,
                             ),
                           ),
@@ -177,7 +177,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               '웹페이지를 불러올 수 없습니다',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 24,
+                fontSize: 27,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -188,7 +188,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               '공공데이터포털은 보안상의 이유로\n앱 내 웹뷰에서 차단될 수 있습니다',
               style: TextStyle(
                 fontFamily: 'Dongle',
-                fontSize: 18,
+                fontSize: 21,
                 color: Colors.grey,
               ),
               textAlign: TextAlign.center,
@@ -203,7 +203,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               icon: const Icon(Icons.open_in_browser),
               label: const Text(
                 '외부 브라우저에서 열기',
-                style: TextStyle(fontFamily: 'Dongle', fontSize: 16),
+                style: TextStyle(fontFamily: 'Dongle', fontSize: 19),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
@@ -231,7 +231,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 '다시 시도',
                 style: TextStyle(
                   fontFamily: 'Dongle',
-                  fontSize: 16,
+                  fontSize: 19,
                   color: AppColors.accent,
                 ),
               ),
