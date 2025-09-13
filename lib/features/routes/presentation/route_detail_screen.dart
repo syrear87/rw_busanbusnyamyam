@@ -2,10 +2,47 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../data/busan_bis_api.dart';
 import '../../../../data/route_traffic.dart';
 import '../../stops/data/stop_detail_providers.dart';
+
+// 즐겨찾기 노선 관리
+class FavoriteRoutesNotifier extends StateNotifier<Set<String>> {
+  FavoriteRoutesNotifier() : super({}) {
+    _loadFavorites();
+  }
+
+  static const String _key = 'fav_routes';
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final favorites = prefs.getStringList(_key) ?? [];
+    state = favorites.toSet();
+  }
+
+  Future<void> toggleFavorite(String lineid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final newFavorites = Set<String>.from(state);
+
+    if (newFavorites.contains(lineid)) {
+      newFavorites.remove(lineid);
+    } else {
+      newFavorites.add(lineid);
+    }
+
+    state = newFavorites;
+    await prefs.setStringList(_key, newFavorites.toList());
+  }
+
+  bool isFavorite(String lineid) => state.contains(lineid);
+}
+
+final favoriteRoutesProvider =
+    StateNotifierProvider<FavoriteRoutesNotifier, Set<String>>(
+      (ref) => FavoriteRoutesNotifier(),
+    );
 
 class RouteDetailScreen extends ConsumerStatefulWidget {
   const RouteDetailScreen({super.key});
@@ -14,8 +51,12 @@ class RouteDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<RouteDetailScreen> createState() => _RouteDetailScreenState();
 }
 
-class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
+class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
+    with TickerProviderStateMixin {
   Timer? _refreshTimer;
+  Timer? _countdownTimer; // 카운트다운 타이머
+  AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
+  int _countdownSeconds = 30; // 30초 카운트다운
   DateTime? _lastRefreshTime;
   List<int> _trafficColors = []; // 구간별 트래픽 색상 (-1=grey, 0=green, 1=amber, 2=red)
   List<RouteStop> _routeStops = []; // 정류장 목록 캐시
@@ -26,6 +67,13 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
   @override
   void initState() {
     super.initState();
+
+    // 애니메이션 컨트롤러 초기화
+    _refreshAnimationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+
     _startAutoRefresh();
     // 초기 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -122,18 +170,47 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _countdownTimer?.cancel();
+    _refreshAnimationController?.dispose();
     super.dispose();
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted) {
-        print('🔄 10초 자동 갱신 실행');
+        print('🔄 30초 자동 갱신 실행');
         setState(() {
           _lastRefreshTime = DateTime.now();
         });
-        // Plan A: 트래픽 색상 갱신 (1콜/10초)
+        // Plan A: 트래픽 색상 갱신 (1콜/30초)
         _updateTrafficColors();
+        
+        // 새로고침 애니메이션 시작
+        _refreshAnimationController?.repeat();
+        // 애니메이션 2초 후 정지
+        Timer(const Duration(seconds: 2), () {
+          _refreshAnimationController?.stop();
+          _refreshAnimationController?.reset();
+        });
+      }
+    });
+    
+    // 카운트다운 타이머 시작
+    _startCountdownTimer();
+  }
+  
+  // 카운트다운 타이머 시작
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _countdownSeconds--;
+        });
+
+        if (_countdownSeconds <= 0) {
+          _countdownSeconds = 30; // 리셋
+        }
       }
     });
   }
@@ -169,45 +246,50 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$lineno번 노선',
-              style: const TextStyle(
-                fontFamily: 'Dongle',
-                fontSize: 24,
-                color: AppColors.accent,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (_lastRefreshTime != null)
-              Text(
-                '마지막 갱신: ${_formatTime(_lastRefreshTime!)}',
-                style: const TextStyle(
-                  fontFamily: 'Dongle',
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              print('🔄 수동 갱신 실행');
-              setState(() {
-                _lastRefreshTime = DateTime.now();
-              });
-              _updateTrafficColors(); // Plan A: 1콜/10초
-            },
-            icon: const Icon(Icons.refresh, color: AppColors.accent),
-            tooltip: '새로고침',
+        title: Text(
+          '$lineno번 노선',
+          style: const TextStyle(
+            fontFamily: 'Dongle',
+            fontSize: 24,
+            color: AppColors.accent,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
         backgroundColor: const Color(0xFFF0DFCC),
         elevation: 0,
         foregroundColor: AppColors.accent,
+        actions: [
+          // 즐겨찾기 버튼
+          Consumer(
+            builder: (context, ref, child) {
+              final favoriteRoutes = ref.watch(favoriteRoutesProvider);
+              final isFavorite = favoriteRoutes.contains(lineid);
+              
+              return IconButton(
+                onPressed: () {
+                  ref
+                      .read(favoriteRoutesProvider.notifier)
+                      .toggleFavorite(lineid);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFavorite ? '즐겨찾기에서 해제됨' : '즐겨찾기에 추가됨',
+                        style: const TextStyle(fontFamily: 'Dongle'),
+                      ),
+                      backgroundColor: AppColors.accent,
+                    ),
+                  );
+                },
+                icon: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  color: isFavorite ? Colors.amber : AppColors.accent,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -216,6 +298,10 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
           children: [
             // 노선 상세 정보 (API 호출 결과)
             _buildRouteDetails(lineid, lineno),
+            const SizedBox(height: 16),
+            
+            // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
+            _buildControlArea(),
             const SizedBox(height: 16),
             
             // 정류장 목록
@@ -374,17 +460,10 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
             // 정류장 목록 헤더
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: BusColorMapper.getRouteColor(lineno, bustype),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.list_alt,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                const Icon(
+                  Icons.list_alt,
+                  color: AppColors.accent,
+                  size: 20,
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -427,19 +506,19 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
           children: [
             // 정류장 인덱스
             Container(
-              width: 24,
-              height: 24,
+              width: 18,
+              height: 18,
               decoration: BoxDecoration(
                 color: trafficColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: Colors.white, width: 0),
               ),
               child: Center(
                 child: Text(
                   '${index + 1}',
                   style: const TextStyle(
                     fontFamily: 'Dongle',
-                    fontSize: 12,
+                    fontSize: 10,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -450,7 +529,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
             if (!isLast)
               Container(
                 width: 3,
-                height: 60,
+                height: 40,
                 color: trafficColor,
               ),
           ],
@@ -459,25 +538,10 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
         
         // 정류장 정보
         Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-              border: Border.all(
-                color: hasBus ? AppColors.accent : Colors.grey.withOpacity(0.3),
-                width: hasBus ? 2 : 1,
-              ),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
@@ -751,6 +815,41 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen> {
     } else {
       return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     }
+  }
+
+  // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
+  Widget _buildControlArea() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // 남은시간 표시 (0:30 형식)
+          Text(
+            '0:${_countdownSeconds.toString().padLeft(2, '0')}',
+            style: const TextStyle(
+              fontFamily: 'Dongle',
+              fontSize: 16,
+              color: AppColors.accent,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // 새로고침 아이콘 (애니메이션)
+          AnimatedBuilder(
+            animation:
+                _refreshAnimationController ?? const AlwaysStoppedAnimation(0),
+            builder: (context, child) {
+              final animationValue = _refreshAnimationController?.value ?? 0;
+              return Transform.rotate(
+                angle: animationValue * 2 * 3.14159,
+                child: Icon(Icons.refresh, color: AppColors.accent, size: 20),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
   
   /// 차량 위치 기반으로 트래픽 색상 생성 (API 호출 없이)
