@@ -33,6 +33,13 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
   Timer? _uiUpdateTimer; // UI 업데이트용 타이머
   AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
 
+  // 드래그 가능한 리스트 상태 관리
+  double _listHeight = 300.0; // 기본 리스트 높이
+  double _minListHeight = 100.0; // 최소 리스트 높이
+  double _maxListHeight = 0.0; // 최대 리스트 높이 (화면 높이 - 상단 여백)
+  bool _isDragging = false;
+  bool _isExpanded = false; // 목록이 확장된 상태인지 추적
+
   // 새로고침 버튼 쿨다운 관련
   bool _isRefreshCooldown = false; // 쿨다운 상태
   int _refreshCooldownSeconds = 0; // 남은 쿨다운 시간 (초)
@@ -59,6 +66,13 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
       _checkAndRequestLocationPermission();
       // 상세페이지에서 돌아온 경우 지도 다시 활성화
       _checkForMapReactivation();
+
+      // 화면 높이에 따른 최대 리스트 높이 설정 (SafeArea 고려)
+      final screenHeight = MediaQuery.of(context).size.height;
+      final safeAreaTop = MediaQuery.of(context).padding.top;
+      final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+      // SafeArea를 침범하지 않도록 상단 여백과 하단 SafeArea 고려
+      _maxListHeight = screenHeight - safeAreaTop - safeAreaBottom - 120; // 상단 여백 120px
     });
 
     // 10초마다 UI 업데이트 (카운트다운 표시용) - 성능 최적화
@@ -452,7 +466,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(child: _buildNearbyTab()),
+      body: _buildNearbyTab(),
     );
   }
 
@@ -470,121 +484,34 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
         return RefreshIndicator(
           onRefresh: () => ref.read(locationController.notifier).refresh(),
           color: AppColors.accent,
-          child: Column(
+          child: Stack(
             children: [
-              // 지도 (500m 범위)
-              Expanded(flex: 1, child: _buildGoogleMap(position, nearbyStops)),
-              // 새로고침 버튼 영역 (드롭다운 + 새로고침)
-              Container(
-                height: 50,
-                color: AppColors.background,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 왼쪽: 반경 선택 드롭다운
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: DropdownButton<int>(
-                        value: _selectedRadius,
-                        underline: Container(),
-                        items: [100, 200, 300, 500].map((int radius) {
-                          return DropdownMenuItem<int>(
-                            value: radius,
-                            child: Text(
-                              radius >= 1000
-                                  ? '${radius ~/ 1000}km'
-                                  : '${radius}m',
-                              style: const TextStyle(
-                                fontFamily: 'Dongle',
-                                fontSize: 27,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (int? newValue) {
-                          if (newValue != null) {
-                            print('📍 드롭다운 선택: ${newValue}m');
-                            setState(() {
-                              _selectedRadius = newValue;
-                            });
-                            // Provider 업데이트
-                            ref.read(selectedRadiusProvider.notifier).state =
-                                newValue;
-                            print('📍 Provider 업데이트 완료: ${newValue}m');
+              // 지도 - 리스트 영역을 제외한 상단 영역 (동적 높이, 애니메이션 적용)
+              AnimatedPositioned(
+                duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+                curve: _isDragging ? Curves.linear : Curves.easeInOut,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: _listHeight,
+                child: _buildGoogleMap(position, nearbyStops),
+              ),
 
-                            // 반경 변경 시 모든 버스 도착 정보 API 재호출
-                            final nearbyStopsList = ref.read(
-                              nearbyStopsListProvider,
-                            );
-                            for (final stop in nearbyStopsList) {
-                              ref
-                                  .read(
-                                    busArrivalProvider(stop.s.arsno).notifier,
-                                  )
-                                  .refresh();
-                            }
-                            print(
-                              '🔄 반경 변경으로 인한 API 재호출: ${nearbyStopsList.length}개 정류장',
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                    // 오른쪽: 새로고침 버튼
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 자동 새로고침 카운트다운 표시
-                          if (!_isAutoRefreshing) ...[
-                            Text(
-                              _formatAutoRefreshCountdown(
-                                _autoRefreshCountdown,
-                              ),
-                              style: const TextStyle(
-                                fontFamily: 'Dongle',
-                                fontSize: 19,
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                          // 새로고침 버튼 (자동 새로고침 중일 때는 비활성화)
-                          IconButton(
-                            onPressed: null, // 수동 새로고침 비활성화
-                            icon: _refreshAnimationController != null
-                                ? AnimatedBuilder(
-                                    animation: _refreshAnimationController!,
-                                    builder: (context, child) {
-                                      return Transform.rotate(
-                                        angle:
-                                            _refreshAnimationController!.value *
-                                            2.0 *
-                                            3.14159,
-                                        child: Icon(
-                                          Icons.refresh,
-                                          color: AppColors.accent,
-                                          size: 28,
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Icon(
-                                    Icons.refresh,
-                                    color: AppColors.accent,
-                                    size: 28,
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              // 드래그 가능한 하단 리스트 (애니메이션 적용)
+              AnimatedContainer(
+                duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+                curve: _isDragging ? Curves.linear : Curves.easeInOut,
+                child: Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: _listHeight,
+                  child: SafeArea(
+                    top: false,
+                    child: _buildDraggableList(nearbyStopsList),
+                  ),
                 ),
               ),
-              // 가까운 정류장 목록 (100m 범위)
-              Expanded(flex: 1, child: _buildNearbyStopsList(nearbyStopsList)),
             ],
           ),
         );
@@ -693,6 +620,220 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
         strokeWidth: 2,
       ),
     };
+  }
+
+  Widget _buildDraggableList(List<({Stop s, int m})> nearestStops) {
+    return GestureDetector(
+      onPanStart: (details) {
+        _isDragging = true;
+      },
+      onPanEnd: (details) {
+        _isDragging = false;
+
+        // 드래그 속도에 따른 자동 스냅
+        final velocity = details.velocity.pixelsPerSecond.dy;
+        if (velocity.abs() > 500) {
+          setState(() {
+            if (velocity < 0) {
+              // 위로 빠르게 드래그하면 최대 높이로 (SafeArea 고려)
+              _listHeight = _maxListHeight;
+              _isExpanded = true;
+            } else {
+              // 아래로 빠르게 드래그하면 기본 높이로
+              _listHeight = 300.0;
+              _isExpanded = false;
+            }
+          });
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(_isDragging ? 8 : 16)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: _isDragging ? 12 : 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // 드래그 핸들 + 컨트롤 영역
+            _buildDragHandleWithControls(),
+
+            // 정류장 리스트 (전체 영역에서 드래그 가능)
+            Expanded(
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  if (!_isDragging) return;
+
+                  setState(() {
+                    // 위로 드래그하면 리스트 높이 증가 (음수 delta)
+                    // SafeArea를 고려한 최대 높이로 제한
+                    final newHeight = _listHeight - details.delta.dy;
+                    _listHeight = newHeight.clamp(_minListHeight, _maxListHeight);
+                  });
+                },
+                onPanStart: (details) {
+                  _isDragging = true;
+                },
+                onPanEnd: (details) {
+                  _isDragging = false;
+
+                  // 드래그 속도에 따른 자동 스냅
+                  final velocity = details.velocity.pixelsPerSecond.dy;
+                  if (velocity.abs() > 500) {
+                    setState(() {
+                      if (velocity < 0) {
+                        // 위로 빠르게 드래그하면 최대 높이로 (SafeArea 고려)
+                        _listHeight = _maxListHeight;
+                        _isExpanded = true;
+                      } else {
+                        // 아래로 빠르게 드래그하면 기본 높이로
+                        _listHeight = 300.0;
+                        _isExpanded = false;
+                      }
+                    });
+                  } else {
+                    // 일반적인 드래그 종료 시 현재 높이에 따라 확장 상태 업데이트
+                    setState(() {
+                      _isExpanded = _listHeight > _maxListHeight * 0.7;
+                    });
+                  }
+                },
+                child: _buildNearbyStopsList(nearestStops),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDragHandleWithControls() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          // 드래그 핸들
+          GestureDetector(
+            onTap: () {
+              // 핸들 탭으로 목록 확장/축소 토글
+              setState(() {
+                _isExpanded = !_isExpanded;
+                if (_isExpanded) {
+                  // 확장: 최대 높이로
+                  _listHeight = _maxListHeight;
+                } else {
+                  // 축소: 기본 높이로
+                  _listHeight = 300.0;
+                }
+              });
+            },
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _isExpanded ? AppColors.accent : Colors.grey[400],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // 컨트롤 영역 (드롭다운 + 새로고침)
+          Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 왼쪽: 반경 선택 드롭다운
+                DropdownButton<int>(
+                  value: _selectedRadius,
+                  underline: Container(),
+                  items: [100, 200, 300, 500].map((int radius) {
+                    return DropdownMenuItem<int>(
+                      value: radius,
+                      child: Text(
+                        radius >= 1000
+                            ? '${radius ~/ 1000}km'
+                            : '${radius}m',
+                        style: const TextStyle(
+                          fontFamily: 'Dongle',
+                          fontSize: 27,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      print('📍 드롭다운 선택: ${newValue}m');
+                      setState(() {
+                        _selectedRadius = newValue;
+                      });
+                      // Provider 업데이트
+                      ref.read(selectedRadiusProvider.notifier).state = newValue;
+                      print('📍 Provider 업데이트 완료: ${newValue}m');
+
+                      // 반경 변경 시 모든 버스 도착 정보 API 재호출
+                      final nearbyStopsList = ref.read(nearbyStopsListProvider);
+                      for (final stop in nearbyStopsList) {
+                        ref.read(busArrivalProvider(stop.s.arsno).notifier).refresh();
+                      }
+                      print('🔄 반경 변경으로 인한 API 재호출: ${nearbyStopsList.length}개 정류장');
+                    }
+                  },
+                ),
+                // 오른쪽: 새로고침 버튼
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 자동 새로고침 카운트다운 표시
+                    if (!_isAutoRefreshing) ...[
+                      Text(
+                        _formatAutoRefreshCountdown(_autoRefreshCountdown),
+                        style: const TextStyle(
+                          fontFamily: 'Dongle',
+                          fontSize: 19,
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                    // 새로고침 버튼 (자동 새로고침 중일 때는 비활성화)
+                    IconButton(
+                      onPressed: null, // 수동 새로고침 비활성화
+                      icon: _refreshAnimationController != null
+                          ? AnimatedBuilder(
+                              animation: _refreshAnimationController!,
+                              builder: (context, child) {
+                                return Transform.rotate(
+                                  angle: _refreshAnimationController!.value * 2.0 * 3.14159,
+                                  child: Icon(
+                                    Icons.refresh,
+                                    color: AppColors.accent,
+                                    size: 28,
+                                  ),
+                                );
+                              },
+                            )
+                          : Icon(
+                              Icons.refresh,
+                              color: AppColors.accent,
+                              size: 28,
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildNearbyStopsList(List<({Stop s, int m})> nearestStops) {
