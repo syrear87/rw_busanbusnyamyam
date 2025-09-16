@@ -32,6 +32,26 @@ class MapWithListView extends ConsumerStatefulWidget {
 class _MapWithListViewState extends ConsumerState<MapWithListView> {
   int? selectedPlaceIndex;
   GoogleMapController? _mapController;
+  
+  // 드래그 가능한 리스트 상태 관리
+  double _listHeight = 300.0; // 기본 리스트 높이
+  double _minListHeight = 100.0; // 최소 리스트 높이
+  double _maxListHeight = 0.0; // 최대 리스트 높이 (화면 높이 - 상단 여백)
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 화면 높이에 따른 최대 리스트 높이 설정 (SafeArea 고려)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenHeight = MediaQuery.of(context).size.height;
+      final safeAreaTop = MediaQuery.of(context).padding.top;
+      final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+      // SafeArea를 침범하지 않도록 상단 여백과 하단 SafeArea 고려
+      // 더 안전한 여백을 두어 핸들이 SafeArea 위로 올라가지 않도록 함
+      _maxListHeight = screenHeight - safeAreaTop - safeAreaBottom - 120; // 상단 여백 120px (40px 추가)
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,18 +101,18 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
 
     return Stack(
       children: [
-        // 지도 - 리스트 영역을 제외한 상단 영역
+        // 지도 - 리스트 영역을 제외한 상단 영역 (동적 높이)
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          bottom: 300, // 리스트 높이만큼 하단 여백
+          bottom: _listHeight,
           child: _buildMap(currentQuery, currentLocation, currentPlaces),
         ),
 
-        // 하단 Attribution (필수) - 지도 영역 내 하단
+        // 하단 Attribution (필수) - 지도 영역 내 하단 (동적 위치)
         Positioned(
-          bottom: 320, // 리스트 높이 + 여백
+          bottom: _listHeight + 20, // 리스트 높이 + 여백
           right: 8,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -132,59 +152,13 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             child: _buildErrorSnackBar(currentLocation.error!),
           ),
 
-        // 하단 고정 리스트
+        // 드래그 가능한 하단 리스트
         Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          height: 300,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 8,
-                  offset: Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // 리스트 내용 (고정 높이, 헤더 없이 바로 시작)
-                Expanded(
-                  child: currentPlaces.when(
-                    data: (places) => places.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.only(top: 16), // 상단 여백만 추가
-                            itemCount: places.length,
-                            itemBuilder: (context, index) {
-                              final place = places[index];
-                              final isSelected = selectedPlaceIndex == index;
-
-                              return PlaceListItem(
-                                place: place,
-                                isSelected: isSelected,
-                                onTap: () => _onPlaceSelected(index, place),
-                              );
-                            },
-                          ),
-                    loading: () => _buildLoadingState(),
-                    error: (error, stack) =>
-                        _buildErrorState(error.toString()),
-                  ),
-                ),
-
-                // 하단 SafeArea (메인 탭바와의 여백)
-                SafeArea(
-                  top: false,
-                  child: Container(height: 8),
-                ),
-              ],
-            ),
-          ),
+          height: _listHeight,
+          child: _buildDraggableList(currentPlaces),
         ),
       ],
     );
@@ -302,6 +276,141 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: LatLng(lat, lon), zoom: 15.0),
+      ),
+    );
+  }
+
+  Widget _buildDraggableList(AsyncValue<List<Place>> currentPlaces) {
+    return GestureDetector(
+      onPanStart: (details) {
+        _isDragging = true;
+      },
+      onPanEnd: (details) {
+        _isDragging = false;
+        
+        // 드래그 속도에 따른 자동 스냅
+        final velocity = details.velocity.pixelsPerSecond.dy;
+        if (velocity.abs() > 500) {
+          setState(() {
+            if (velocity < 0) {
+              // 위로 빠르게 드래그하면 최대 높이로 (SafeArea 고려)
+              _listHeight = _maxListHeight;
+            } else {
+              // 아래로 빠르게 드래그하면 기본 높이로
+              _listHeight = 300.0;
+            }
+          });
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(_isDragging ? 8 : 16)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: _isDragging ? 12 : 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // 드래그 핸들
+            _buildDragHandle(),
+            
+            // 리스트 내용 (전체 영역에서 드래그 가능)
+            Expanded(
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  if (!_isDragging) return;
+                  
+                  setState(() {
+                    // 위로 드래그하면 리스트 높이 증가 (음수 delta)
+                    // SafeArea를 고려한 최대 높이로 제한
+                    final newHeight = _listHeight - details.delta.dy;
+                    _listHeight = newHeight.clamp(_minListHeight, _maxListHeight);
+                  });
+                },
+                onPanStart: (details) {
+                  _isDragging = true;
+                },
+                onPanEnd: (details) {
+                  _isDragging = false;
+                  
+                  // 드래그 속도에 따른 자동 스냅
+                  final velocity = details.velocity.pixelsPerSecond.dy;
+                  if (velocity.abs() > 500) {
+                    setState(() {
+                      if (velocity < 0) {
+                        // 위로 빠르게 드래그하면 최대 높이로 (SafeArea 고려)
+                        _listHeight = _maxListHeight;
+                      } else {
+                        // 아래로 빠르게 드래그하면 기본 높이로
+                        _listHeight = 300.0;
+                      }
+                    });
+                  }
+                },
+                child: currentPlaces.when(
+                  data: (places) => places.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(top: 8),
+                          itemCount: places.length,
+                          itemBuilder: (context, index) {
+                            final place = places[index];
+                            final isSelected = selectedPlaceIndex == index;
+
+                            return PlaceListItem(
+                              place: place,
+                              isSelected: isSelected,
+                              onTap: () => _onPlaceSelected(index, place),
+                            );
+                          },
+                        ),
+                  loading: () => _buildLoadingState(),
+                  error: (error, stack) => _buildErrorState(error.toString()),
+                ),
+              ),
+            ),
+
+            // 하단 SafeArea (메인 탭바와의 여백)
+            SafeArea(
+              top: false,
+              child: Container(height: 8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDragHandle() {
+    return GestureDetector(
+      onTap: () {
+        // 탭으로도 리스트 높이 토글
+        setState(() {
+          if (_listHeight < _maxListHeight * 0.7) {
+            _listHeight = _maxListHeight;
+          } else {
+            _listHeight = 300.0;
+          }
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[400],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
       ),
     );
   }
