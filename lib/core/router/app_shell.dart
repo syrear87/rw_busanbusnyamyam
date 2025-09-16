@@ -2,38 +2,93 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   final Widget child;
 
   const AppShell({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  int _previousIndex = 0;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
 
-    int currentIndex = 0;
+    int newIndex = 0;
     switch (location) {
       case '/home':
-        currentIndex = 0;
+        newIndex = 0;
         break;
       case '/stops':
-        currentIndex = 1;
+        newIndex = 1;
         break;
       case '/routes':
-        currentIndex = 2;
+        newIndex = 2;
         break;
       case '/nyamnyam':
-        currentIndex = 3;
+        newIndex = 3;
         break;
       case '/settings':
-        currentIndex = 4;
+        newIndex = 4;
         break;
     }
 
+    // 탭 인덱스가 변경되었을 때 애니메이션 실행
+    if (newIndex != _currentIndex) {
+      _previousIndex = _currentIndex;
+      _currentIndex = newIndex;
+      
+      // 슬라이드 방향 결정 (인덱스가 작아지면 왼쪽으로, 커지면 오른쪽으로)
+      final slideDirection = _currentIndex < _previousIndex ? -1.0 : 1.0;
+      
+      _slideAnimation = Tween<Offset>(
+        begin: Offset(slideDirection, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ));
+      
+      _animationController.forward(from: 0);
+    }
+
     return Scaffold(
-      body: child,
+      body: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
+      ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
+        selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           switch (index) {
             case 0:
