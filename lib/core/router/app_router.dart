@@ -36,6 +36,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const NyamNyamScreen(),
           ),
           GoRoute(
+            path: '/nyam',
+            builder: (context, state) => const NyamNyamScreen(),
+          ),
+          GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
           ),

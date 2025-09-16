@@ -1,11 +1,13 @@
 import 'place_model.dart';
 
 abstract class PlaceRepository {
-  Future<List<Place>> search({
-    required double lat,
-    required double lng,
-    required int radiusM,        // 200|400|700
-    required String category,    // 'FD6' or 'CE7'
+  Future<Result<List<Place>>> findPlaces({
+    required double centerLat,
+    required double centerLon,
+    required int radiusMeters,
+    List<PlaceCategory> categories = const [PlaceCategory.restaurant, PlaceCategory.cafe],
+    int limit = 50,
+    PlaceSort sort = PlaceSort.distance,
   });
 }
 
