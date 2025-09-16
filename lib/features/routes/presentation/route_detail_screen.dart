@@ -238,7 +238,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
     final bustype = extra?['bustype'] as String? ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC),
+      backgroundColor: AppColors.ivoryBase,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => context.go('/routes'),
@@ -255,7 +255,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFF0DFCC),
+        backgroundColor: AppColors.ivoryBase,
         elevation: 0,
         foregroundColor: AppColors.accent,
         actions: [

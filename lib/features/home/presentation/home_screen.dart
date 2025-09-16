@@ -92,7 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC), // 테마 배경색
+      backgroundColor: AppColors.ivoryBase, // 스크린 배경색
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),

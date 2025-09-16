@@ -648,7 +648,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.ivoryBase,
           borderRadius: BorderRadius.vertical(top: Radius.circular(_isDragging ? 8 : 16)),
           boxShadow: [
             BoxShadow(
@@ -850,15 +850,18 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
       );
     }
 
-    return ListView.builder(
-      controller: _listScrollController,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: nearestStops.length,
+    return Container(
+      color: AppColors.ivoryBase,
+      child: ListView.builder(
+        controller: _listScrollController,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        itemCount: nearestStops.length,
       itemBuilder: (context, index) {
         final item = nearestStops[index];
         final isSelected = _selectedStopId == item.s.id;
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
+          color: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(
@@ -919,6 +922,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           ),
         );
       },
+      ),
     );
   }
 

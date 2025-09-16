@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/theme/app_colors.dart';
 import '../data/nyam_providers.dart';
 import '../data/nyam_query_state.dart';
 import '../data/location_provider.dart';
@@ -43,7 +44,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
     final places = ref.watch(placesProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC),
+      backgroundColor: AppColors.ivoryBase,
       body: Stack(
         children: [
           // GoogleMap (전면)
@@ -94,7 +95,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                 style: TextStyle(
                   fontFamily: 'Dongle',
                   fontSize: 20,
-                  color: Color(0xFF7BB074),
+                  color: AppColors.primarySage,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -110,8 +111,8 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                       fontFamily: 'Dongle',
                       fontSize: 18,
                       color: query.radius == radius
-                          ? const Color(0xFF7BB074)
-                          : Colors.black87,
+                          ? AppColors.primarySage
+                          : AppColors.textBody,
                       fontWeight: query.radius == radius
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -126,11 +127,11 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.ivorySurface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: const Color(0x14000000),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -139,7 +140,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_on, color: Color(0xFF7BB074), size: 16),
+            const Icon(Icons.location_on, color: AppColors.primarySage, size: 16),
             const SizedBox(width: 4),
             Text(
               '${query.radius}m',
@@ -168,7 +169,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                 style: TextStyle(
                   fontFamily: 'Dongle',
                   fontSize: 20,
-                  color: Color(0xFF7BB074),
+                  color: AppColors.primarySage,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -184,8 +185,8 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                       fontFamily: 'Dongle',
                       fontSize: 18,
                       color: query.category == QueryCategory.all
-                          ? const Color(0xFF7BB074)
-                          : Colors.black87,
+                          ? AppColors.primarySage
+                          : AppColors.textBody,
                       fontWeight: query.category == QueryCategory.all
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -203,8 +204,8 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                       fontFamily: 'Dongle',
                       fontSize: 18,
                       color: query.category == QueryCategory.restaurant
-                          ? const Color(0xFF7BB074)
-                          : Colors.black87,
+                          ? AppColors.primarySage
+                          : AppColors.textBody,
                       fontWeight: query.category == QueryCategory.restaurant
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -222,8 +223,8 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                       fontFamily: 'Dongle',
                       fontSize: 18,
                       color: query.category == QueryCategory.cafe
-                          ? const Color(0xFF7BB074)
-                          : Colors.black87,
+                          ? AppColors.primarySage
+                          : AppColors.textBody,
                       fontWeight: query.category == QueryCategory.cafe
                           ? FontWeight.bold
                           : FontWeight.normal,
@@ -238,11 +239,11 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.ivorySurface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: const Color(0x14000000),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -257,7 +258,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                   : query.category == QueryCategory.cafe
                   ? Icons.local_cafe
                   : Icons.category,
-              color: const Color(0xFF7BB074),
+              color: AppColors.primarySage,
               size: 16,
             ),
             const SizedBox(width: 4),
@@ -308,11 +309,11 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white, // 항상 흰색 배경 유지
+                  color: AppColors.ivorySurface, // 항상 흰색 배경 유지
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: const Color(0x14000000),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -323,7 +324,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                   children: [
                     const Icon(
                       Icons.directions_bus, // 항상 버스 아이콘 유지
-                      color: Color(0xFF7BB074),
+                      color: AppColors.primarySage,
                       size: 16,
                     ),
                     const SizedBox(width: 4),
@@ -336,7 +337,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                       style: const TextStyle(
                         fontFamily: 'Dongle',
                         fontSize: 16,
-                        color: Color(0xFF7BB074),
+                        color: AppColors.primarySage,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

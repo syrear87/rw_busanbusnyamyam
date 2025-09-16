@@ -97,6 +97,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.ivoryBase,
       body: SafeArea(
         child: GestureDetector(
           onTap: () {
@@ -121,7 +122,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.accent),
+                    borderSide: BorderSide(color: AppColors.borderSage),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -129,7 +130,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
                   ),
                   prefixIcon: Icon(Icons.search, color: AppColors.accent),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: Colors.white,
                 ),
                 style: const TextStyle(
                   fontFamily: 'Dongle',
@@ -186,6 +187,7 @@ class _RoutesScreenState extends ConsumerState<RoutesScreen> {
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 elevation: 2,
+                                color: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   side: BorderSide(color: AppColors.accent.withOpacity(0.3)),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/theme/app_colors.dart';
 import '../data/nyam_providers.dart';
 import '../data/nyam_query_state.dart';
 import '../data/location_provider.dart';
@@ -122,7 +123,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
+              color: AppColors.ivorySurface.withOpacity(0.8),
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Text(
@@ -130,7 +131,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               style: TextStyle(
                 fontFamily: 'Dongle',
                 fontSize: 14,
-                color: Colors.black87,
+                color: AppColors.textBody,
               ),
             ),
           ),
@@ -236,8 +237,8 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
         circleId: const CircleId('radius'),
         center: center,
         radius: query.radius.toDouble(),
-        fillColor: const Color(0xFF7BB074).withOpacity(0.1),
-        strokeColor: const Color(0xFF7BB074),
+        fillColor: AppColors.primarySage.withOpacity(0.1),
+        strokeColor: AppColors.primarySage,
         strokeWidth: 2,
       ),
     );
@@ -313,11 +314,11 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.ivoryBase,
           borderRadius: BorderRadius.vertical(top: Radius.circular(_isDragging ? 8 : 16)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black26,
+              color: const Color(0x40000000),
               blurRadius: _isDragging ? 12 : 8,
               offset: const Offset(0, -2),
             ),
@@ -371,19 +372,22 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
                 child: currentPlaces.when(
                   data: (places) => places.isEmpty
                       ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(top: 8),
-                          itemCount: places.length,
-                          itemBuilder: (context, index) {
-                            final place = places[index];
-                            final isSelected = selectedPlaceIndex == index;
+                      : Container(
+                          color: AppColors.ivoryBase,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(top: 8),
+                            itemCount: places.length,
+                            itemBuilder: (context, index) {
+                              final place = places[index];
+                              final isSelected = selectedPlaceIndex == index;
 
-                            return PlaceListItem(
-                              place: place,
-                              isSelected: isSelected,
-                              onTap: () => _onPlaceSelected(index, place),
-                            );
-                          },
+                              return PlaceListItem(
+                                place: place,
+                                isSelected: isSelected,
+                                onTap: () => _onPlaceSelected(index, place),
+                              );
+                            },
+                          ),
                         ),
                   loading: () => _buildLoadingState(),
                   error: (error, stack) => _buildErrorState(error.toString()),
@@ -425,7 +429,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: _isExpanded ? const Color(0xFF7BB074) : Colors.grey[400],
+              color: _isExpanded ? AppColors.primarySage : AppColors.textMuted,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -466,14 +470,14 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 48, color: Colors.grey),
+          Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
           SizedBox(height: 16),
           Text(
             '검색 결과가 없습니다',
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 20,
-              color: Colors.grey,
+              color: AppColors.textMuted,
             ),
           ),
           SizedBox(height: 8),
@@ -482,7 +486,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 16,
-              color: Colors.grey,
+              color: AppColors.textMuted,
             ),
           ),
         ],
@@ -497,7 +501,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.ivoryBase,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -507,7 +511,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               height: 16,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.divider,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -516,7 +520,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               height: 12,
               width: 120,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.divider,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -531,14 +535,14 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           const Text(
             '오류가 발생했습니다',
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 20,
-              color: Colors.red,
+              color: AppColors.error,
             ),
           ),
           const SizedBox(height: 8),
@@ -547,7 +551,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             style: const TextStyle(
               fontFamily: 'Dongle',
               fontSize: 16,
-              color: Colors.grey,
+              color: AppColors.textMuted,
             ),
             textAlign: TextAlign.center,
           ),
@@ -555,8 +559,8 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
           ElevatedButton(
             onPressed: () => ref.read(placesProvider.notifier).refresh(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7BB074),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primarySage,
+              foregroundColor: AppColors.onPrimary,
             ),
             child: const Text(
               '재시도',
@@ -570,7 +574,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
 
   Widget _buildLocationLoadingScreen() {
     return Container(
-      color: const Color(0xFFF0DFCC),
+      color: AppColors.ivoryBase,
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -580,7 +584,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               height: 48,
               child: CircularProgressIndicator(
                 strokeWidth: 4,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7BB074)),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarySage),
               ),
             ),
             SizedBox(height: 24),
@@ -589,7 +593,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               style: TextStyle(
                 fontFamily: 'Dongle',
                 fontSize: 24,
-                color: Color(0xFF7BB074),
+                color: AppColors.primarySage,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -599,7 +603,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               style: TextStyle(
                 fontFamily: 'Dongle',
                 fontSize: 18,
-                color: Colors.grey,
+                color: AppColors.textMuted,
               ),
             ),
           ],
@@ -612,7 +616,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+                color: AppColors.onPrimary,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
@@ -639,7 +643,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 16,
-              color: Color(0xFF7BB074),
+                          color: AppColors.primarySage,
             ),
           ),
         ],
@@ -651,12 +655,12 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orange,
+        color: AppColors.warning,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: Colors.white, size: 20),
+          const Icon(Icons.warning, color: AppColors.onPrimary, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -664,13 +668,13 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
               style: const TextStyle(
                 fontFamily: 'Dongle',
                 fontSize: 16,
-                color: Colors.white,
+                color: AppColors.ivorySurface,
               ),
             ),
           ),
           IconButton(
             onPressed: () => ref.read(locationProvider.notifier).clearError(),
-            icon: const Icon(Icons.close, color: Colors.white, size: 20),
+            icon: const Icon(Icons.close, color: AppColors.onPrimary, size: 20),
           ),
         ],
       ),
@@ -699,23 +703,23 @@ class PlaceListItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: isSelected
-            ? const Color(0xFF7BB074).withOpacity(0.1)
-            : Colors.white,
+            ? AppColors.primarySage.withOpacity(0.1)
+            : AppColors.ivorySurface,
         borderRadius: BorderRadius.circular(12),
         border: isSelected
-            ? Border.all(color: const Color(0xFF7BB074), width: 2)
-            : null,
+            ? Border.all(color: AppColors.primarySage, width: 2)
+            : Border.all(color: AppColors.borderSage, width: 0.5),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: const Color(0xFF7BB074).withOpacity(0.3),
+                  color: AppColors.primarySage.withOpacity(0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: const Color(0x0D000000),
                   blurRadius: 2,
                   offset: const Offset(0, 1),
                 ),
@@ -736,15 +740,15 @@ class PlaceListItem extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: place.category == PlaceCategory.restaurant
-                        ? Colors.orange
-                        : Colors.brown,
+                        ? AppColors.warning
+                        : AppColors.textMuted,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     place.category == PlaceCategory.restaurant
                         ? Icons.restaurant
                         : Icons.local_cafe,
-                    color: Colors.white,
+                    color: AppColors.ivorySurface,
                     size: 20,
                   ),
                 ),
@@ -762,8 +766,8 @@ class PlaceListItem extends StatelessWidget {
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: isSelected
-                              ? const Color(0xFF7BB074)
-                              : Colors.black87,
+                              ? AppColors.primarySage
+                              : AppColors.textBody,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -774,7 +778,7 @@ class PlaceListItem extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Dongle',
                           fontSize: 16,
-                          color: Colors.grey,
+                          color: AppColors.textMuted,
                         ),
                       ),
                       if (place.address != null) ...[
@@ -784,7 +788,7 @@ class PlaceListItem extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'Dongle',
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: AppColors.textMuted,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -803,7 +807,7 @@ class PlaceListItem extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF7BB074).withOpacity(0.1),
+                        color: AppColors.primarySage.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -811,14 +815,14 @@ class PlaceListItem extends StatelessWidget {
                         style: const TextStyle(
                           fontFamily: 'Dongle',
                           fontSize: 12,
-                          color: Color(0xFF7BB074),
+                          color: AppColors.primarySage,
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Icon(
                       Icons.chevron_right,
-                      color: isSelected ? const Color(0xFF7BB074) : Colors.grey,
+                      color: isSelected ? AppColors.primarySage : AppColors.textMuted,
                       size: 20,
                     ),
                   ],
