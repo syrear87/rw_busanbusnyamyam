@@ -81,6 +81,9 @@ class LocationNotifier extends StateNotifier<LocationState> {
       // Try to get current location if possible
       if (serviceEnabled && state.hasPermission) {
         await _getCurrentLocation();
+      } else if (serviceEnabled && !state.hasPermission) {
+        // 서비스는 활성화되어 있지만 권한이 없는 경우 권한 요청
+        await requestPermission();
       }
 
       dev.log(
@@ -113,15 +116,22 @@ class LocationNotifier extends StateNotifier<LocationState> {
 
   Future<void> _getCurrentLocation() async {
     try {
+      dev.log('🔍 Getting current location...');
+      
       // Try getLastKnownPosition first (faster)
       Position? position = await Geolocator.getLastKnownPosition();
+      dev.log('📍 Last known position: ${position?.latitude}, ${position?.longitude}');
 
-      // If no last known position, get current position with timeout
-      if (position == null) {
+      // If no last known position or it's too old, get current position
+      if (position == null || 
+          position.timestamp == null || 
+          DateTime.now().difference(position.timestamp!).inMinutes > 5) {
+        dev.log('🔄 Getting fresh position...');
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 5),
+          timeLimit: const Duration(seconds: 10),
         );
+        dev.log('📍 Fresh position: ${position.latitude}, ${position.longitude}');
       }
 
       final now = DateTime.now();

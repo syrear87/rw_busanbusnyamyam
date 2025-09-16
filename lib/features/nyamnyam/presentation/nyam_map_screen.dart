@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../data/nyam_providers.dart';
 import '../data/nyam_query_state.dart';
 import '../data/location_provider.dart';
+import '../../stops/data/location_provider.dart' as stops_location;
 import 'nyam_map_with_list.dart';
 import 'route_selection_screen.dart';
 
@@ -15,9 +17,29 @@ class NyamMapScreen extends ConsumerStatefulWidget {
 
 class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
   @override
+  void initState() {
+    super.initState();
+    // 페이지 진입 시 위치 권한 요청
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestLocationPermission();
+    });
+  }
+
+  Future<void> _requestLocationPermission() async {
+    print('🚀 NyamMapScreen: 위치 권한 확인 및 요청 시작');
+    try {
+      // 정류장 탭과 동일한 location controller 사용
+      await ref.read(stops_location.locationController.notifier).requestLocationPermission();
+    } catch (e) {
+      print('🚀 NyamMapScreen: 위치 권한 요청 중 오류: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final query = ref.watch(nyamQueryProvider);
     final location = ref.watch(locationProvider);
+    final stopsLocation = ref.watch(stops_location.locationController);
     final places = ref.watch(placesProvider);
 
     return Scaffold(
@@ -28,6 +50,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
           MapWithListView(
             query: query,
             location: location,
+            stopsLocation: stopsLocation,
             places: places,
             onMapControllerCreated: (controller) {
               // Map controller is handled in MapWithListView

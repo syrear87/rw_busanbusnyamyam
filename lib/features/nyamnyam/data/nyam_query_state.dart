@@ -95,7 +95,7 @@ class NyamQueryNotifier extends StateNotifier<NyamQueryState> {
   NyamQueryNotifier()
     : super(
         const NyamQueryState(
-          centerLat: 35.1796, // Default to Busan City Hall
+          centerLat: 35.1796, // Default to Busan City Hall (fallback)
           centerLon: 129.0756,
         ),
       );

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import '../data/nyam_providers.dart';
 import '../data/nyam_query_state.dart';
 import '../data/location_provider.dart';
+import '../../stops/data/location_provider.dart' as stops_location;
 import '../data/place_model.dart';
 
 // 지도와 리스트를 결합한 위젯
 class MapWithListView extends ConsumerStatefulWidget {
   final NyamQueryState query;
   final LocationState location;
+  final AsyncValue<Position?> stopsLocation;
   final AsyncValue<List<Place>> places;
   final Function(GoogleMapController) onMapControllerCreated;
 
@@ -17,6 +20,7 @@ class MapWithListView extends ConsumerStatefulWidget {
     super.key,
     required this.query,
     required this.location,
+    required this.stopsLocation,
     required this.places,
     required this.onMapControllerCreated,
   });
@@ -28,15 +32,25 @@ class MapWithListView extends ConsumerStatefulWidget {
 class _MapWithListViewState extends ConsumerState<MapWithListView> {
   int? selectedPlaceIndex;
   GoogleMapController? _mapController;
-  ScrollController? _listScrollController;
-  NyamQueryState? _previousQuery;
 
   @override
   Widget build(BuildContext context) {
     // 실시간으로 상태를 읽어옴
     final currentQuery = ref.watch(nyamQueryProvider);
     final currentLocation = ref.watch(locationProvider);
+    final currentStopsLocation = ref.watch(stops_location.locationController);
     final currentPlaces = ref.watch(placesProvider);
+
+    // 정류장 탭의 위치 정보 사용
+    final position = currentStopsLocation.maybeWhen(
+      data: (pos) => pos,
+      orElse: () => null,
+    );
+
+    // 디버그 로그 추가
+    print('🗺️ Map build - Stops Location: ${position?.latitude}, ${position?.longitude}');
+    print('🗺️ Map build - Query center: ${currentQuery.centerLat}, ${currentQuery.centerLon}');
+    print('🗺️ Map build - Has valid stops location: ${position != null}');
 
     // 쿼리 변경 감지하여 맵 이동
     ref.listen(nyamQueryProvider, (previous, next) {
@@ -47,14 +61,38 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       }
     });
 
+    // 정류장 탭 위치 변경 감지하여 맵 이동 (첫 진입시 위치 로드될 때)
+    ref.listen(stops_location.locationController, (previous, next) {
+      if (_mapController != null) {
+        final currentPos = next.maybeWhen(data: (pos) => pos, orElse: () => null);
+        final prevPos = previous?.maybeWhen(data: (pos) => pos, orElse: () => null);
+        
+        if (currentPos != null && prevPos == null) {
+          print('🗺️ 첫 위치 로드 완료, 지도 이동: ${currentPos.latitude}, ${currentPos.longitude}');
+          _animateToLocation(currentPos.latitude, currentPos.longitude);
+        }
+      }
+    });
+
+    // 정류장 탭 위치 정보가 로드될 때까지 로딩 표시
+    if (currentStopsLocation.isLoading) {
+      return _buildLocationLoadingScreen();
+    }
+
     return Stack(
       children: [
-        // 지도 - 실시간 상태 사용
-        _buildMap(currentQuery, currentLocation, currentPlaces),
-
-        // 하단 Attribution (필수)
+        // 지도 - 리스트 영역을 제외한 상단 영역
         Positioned(
-          bottom: 200, // 리스트 높이만큼 올림
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 300, // 리스트 높이만큼 하단 여백
+          child: _buildMap(currentQuery, currentLocation, currentPlaces),
+        ),
+
+        // 하단 Attribution (필수) - 지도 영역 내 하단
+        Positioned(
+          bottom: 320, // 리스트 높이 + 여백
           right: 8,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -73,6 +111,18 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
           ),
         ),
 
+        // 위치 로딩 인디케이터
+        if (!currentLocation.hasValidLocation && 
+            currentLocation.hasPermission && 
+            currentLocation.serviceEnabled &&
+            currentLocation.error == null)
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: _buildLocationLoadingIndicator(),
+          ),
+
         // 에러 스낵바
         if (currentLocation.error != null)
           Positioned(
@@ -82,108 +132,59 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             child: _buildErrorSnackBar(currentLocation.error!),
           ),
 
-        // 하단 리스트 (30-70% 드래그 가능)
-        DraggableScrollableSheet(
-          initialChildSize: 0.3,
-          minChildSize: 0.3,
-          maxChildSize: 0.7,
-          builder: (context, scrollController) {
-            _listScrollController = scrollController;
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // 드래그 핸들
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
+        // 하단 고정 리스트
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 300,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 8,
+                  offset: Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                // 리스트 내용 (고정 높이, 헤더 없이 바로 시작)
+                Expanded(
+                  child: currentPlaces.when(
+                    data: (places) => places.isEmpty
+                        ? _buildEmptyState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(top: 16), // 상단 여백만 추가
+                            itemCount: places.length,
+                            itemBuilder: (context, index) {
+                              final place = places[index];
+                              final isSelected = selectedPlaceIndex == index;
 
-                  // 리스트 헤더
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          currentPlaces.when(
-                            data: (places) => '${places.length}개 장소',
-                            loading: () => '검색 중...',
-                            error: (_, __) => '오류',
+                              return PlaceListItem(
+                                place: place,
+                                isSelected: isSelected,
+                                onTap: () => _onPlaceSelected(index, place),
+                              );
+                            },
                           ),
-                          style: const TextStyle(
-                            fontFamily: 'Dongle',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          'OSM 데이터',
-                          style: TextStyle(
-                            fontFamily: 'Dongle',
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                    loading: () => _buildLoadingState(),
+                    error: (error, stack) =>
+                        _buildErrorState(error.toString()),
                   ),
+                ),
 
-                  const Divider(height: 1),
-
-                  // 리스트 내용
-                  Expanded(
-                    child: currentPlaces.when(
-                      data: (places) => places.isEmpty
-                          ? _buildEmptyState()
-                          : ListView.builder(
-                              controller: scrollController,
-                              itemCount: places.length,
-                              itemBuilder: (context, index) {
-                                final place = places[index];
-                                final isSelected = selectedPlaceIndex == index;
-
-                                return PlaceListItem(
-                                  place: place,
-                                  isSelected: isSelected,
-                                  onTap: () => _onPlaceSelected(index, place),
-                                );
-                              },
-                            ),
-                      loading: () => _buildLoadingState(scrollController),
-                      error: (error, stack) =>
-                          _buildErrorState(error.toString()),
-                    ),
-                  ),
-                  
-                  // 하단 SafeArea (메인 탭바와의 여백)
-                  SafeArea(
-                    top: false,
-                    child: Container(height: 8),
-                  ),
-                ],
-              ),
-            );
-          },
+                // 하단 SafeArea (메인 탭바와의 여백)
+                SafeArea(
+                  top: false,
+                  child: Container(height: 8),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -194,6 +195,13 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     LocationState location,
     AsyncValue<List<Place>> places,
   ) {
+    // 정류장 탭의 위치 정보 가져오기
+    final currentStopsLocation = ref.watch(stops_location.locationController);
+    final position = currentStopsLocation.maybeWhen(
+      data: (pos) => pos,
+      orElse: () => null,
+    );
+
     final center = LatLng(query.centerLat, query.centerLon);
     final Set<Marker> markers = {};
     final Set<Circle> circles = {};
@@ -251,21 +259,26 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       ),
     );
 
-    // 부산시청 좌표 (기본값)
-    const busanCityHall = LatLng(35.1796, 129.0756);
+    // 초기 카메라 위치 결정: 정류장 탭 위치 > 쿼리 중심 > 부산시청 기본값
+    LatLng initialPosition;
+    if (position != null) {
+      initialPosition = LatLng(position.latitude, position.longitude);
+    } else {
+      initialPosition = LatLng(query.centerLat, query.centerLon);
+    }
 
     return GoogleMap(
       onMapCreated: (GoogleMapController controller) {
         _mapController = controller;
         widget.onMapControllerCreated(controller);
 
-        // 내 위치로 카메라 이동 (권한이 있고 유효한 위치가 있는 경우)
-        if (location.hasValidLocation) {
-          _animateToLocation(location.lat!, location.lon!);
+        // 정류장 탭 위치로 카메라 이동
+        if (position != null) {
+          _animateToLocation(position.latitude, position.longitude);
         }
       },
-      initialCameraPosition: const CameraPosition(
-        target: busanCityHall, // 부산시청 더미 좌표
+      initialCameraPosition: CameraPosition(
+        target: initialPosition,
         zoom: 15.0,
       ),
       markers: markers,
@@ -298,9 +311,6 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       selectedPlaceIndex = index;
     });
 
-    // 리스트에서 해당 아이템으로 스크롤
-    _scrollToListItem(index);
-
     // 지도 카메라를 선택된 장소로 이동 (선택 마커 scale 애니메이션)
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -322,19 +332,6 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     );
   }
 
-  void _scrollToListItem(int index) {
-    if (_listScrollController != null && _listScrollController!.hasClients) {
-      // 리스트 아이템 높이를 고려하여 스크롤 위치 계산
-      const itemHeight = 80.0; // PlaceListItem의 대략적인 높이
-      final scrollPosition = index * itemHeight;
-
-      _listScrollController!.animateTo(
-        scrollPosition,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
 
   Widget _buildEmptyState() {
     return const Center(
@@ -365,9 +362,8 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     );
   }
 
-  Widget _buildLoadingState(ScrollController scrollController) {
+  Widget _buildLoadingState() {
     return ListView.builder(
-      controller: scrollController,
       itemCount: 5,
       itemBuilder: (context, index) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -437,6 +433,85 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             child: const Text(
               '재시도',
               style: TextStyle(fontFamily: 'Dongle', fontSize: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationLoadingScreen() {
+    return Container(
+      color: const Color(0xFFF0DFCC),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                strokeWidth: 4,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7BB074)),
+              ),
+            ),
+            SizedBox(height: 24),
+            Text(
+              '현재 위치를 찾는 중...',
+              style: TextStyle(
+                fontFamily: 'Dongle',
+                fontSize: 24,
+                color: Color(0xFF7BB074),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '잠시만 기다려주세요',
+              style: TextStyle(
+                fontFamily: 'Dongle',
+                fontSize: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationLoadingIndicator() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7BB074)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            '현재 위치를 찾는 중...',
+            style: TextStyle(
+              fontFamily: 'Dongle',
+              fontSize: 16,
+              color: Color(0xFF7BB074),
             ),
           ),
         ],

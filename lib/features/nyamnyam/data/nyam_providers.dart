@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'place_repository.dart';
 import 'overpass_place_repository.dart';
 import 'cached_place_repository.dart';
 import 'place_model.dart';
 import 'nyam_query_state.dart';
 import 'location_provider.dart';
+import '../../stops/data/location_provider.dart' as stops_location;
 
 // Repository provider
 final placeRepoProvider = Provider<PlaceRepository>((ref) {
@@ -18,10 +20,12 @@ final nyamQueryProvider =
     StateNotifierProvider<NyamQueryNotifier, NyamQueryState>((ref) {
       final notifier = NyamQueryNotifier();
 
-      // Watch location changes and update center automatically
-      ref.listen(locationProvider, (previous, next) {
-        if (next.hasValidLocation) {
-          notifier.updateFromLocation(next.lat!, next.lon!);
+      // Watch stops location changes and update center automatically
+      ref.listen(stops_location.locationController, (previous, next) {
+        final position = next.maybeWhen(data: (pos) => pos, orElse: () => null);
+        if (position != null) {
+          print('📍 정류장 탭 위치 변경 감지: ${position.latitude}, ${position.longitude}');
+          notifier.updateFromLocation(position.latitude, position.longitude);
         }
       });
 
@@ -41,11 +45,20 @@ class PlacesNotifier extends AsyncNotifier<List<Place>> {
   @override
   Future<List<Place>> build() async {
     final query = ref.watch(nyamQueryProvider);
+    final location = ref.watch(locationProvider);
     final queryHash = _generateQueryHash(query);
+
+    // 정류장이 선택된 경우나 유효한 위치가 있을 때만 검색 실행
+    if (query.selectedStop == null && !location.hasValidLocation) {
+      print('⏸️ 위치 로드 대기 중... 검색 보류');
+      return []; // 빈 리스트 반환하여 검색 보류
+    }
 
     // 정류장이 선택된 경우 로그 출력
     if (query.selectedStop != null) {
       print('🚏 정류장 주변 검색: ${query.selectedStop!.name} (${query.radius}m)');
+    } else {
+      print('📍 내 위치 주변 검색: (${query.centerLat.toStringAsFixed(4)}, ${query.centerLon.toStringAsFixed(4)}) (${query.radius}m)');
     }
 
     // 동일한 파라미터로 중복 호출 방지
