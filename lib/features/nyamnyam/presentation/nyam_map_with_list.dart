@@ -38,6 +38,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
   double _minListHeight = 100.0; // 최소 리스트 높이
   double _maxListHeight = 0.0; // 최대 리스트 높이 (화면 높이 - 상단 여백)
   bool _isDragging = false;
+  bool _isExpanded = false; // 목록이 확장된 상태인지 추적
 
   @override
   void initState() {
@@ -101,8 +102,10 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
 
     return Stack(
       children: [
-        // 지도 - 리스트 영역을 제외한 상단 영역 (동적 높이)
-        Positioned(
+        // 지도 - 리스트 영역을 제외한 상단 영역 (동적 높이, 애니메이션 적용)
+        AnimatedPositioned(
+          duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+          curve: _isDragging ? Curves.linear : Curves.easeInOut,
           top: 0,
           left: 0,
           right: 0,
@@ -110,8 +113,10 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
           child: _buildMap(currentQuery, currentLocation, currentPlaces),
         ),
 
-        // 하단 Attribution (필수) - 지도 영역 내 하단 (동적 위치)
-        Positioned(
+        // 하단 Attribution (필수) - 지도 영역 내 하단 (동적 위치, 애니메이션 적용)
+        AnimatedPositioned(
+          duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+          curve: _isDragging ? Curves.linear : Curves.easeInOut,
           bottom: _listHeight + 20, // 리스트 높이 + 여백
           right: 8,
           child: Container(
@@ -152,13 +157,17 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             child: _buildErrorSnackBar(currentLocation.error!),
           ),
 
-        // 드래그 가능한 하단 리스트
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: _listHeight,
-          child: _buildDraggableList(currentPlaces),
+        // 드래그 가능한 하단 리스트 (애니메이션 적용)
+        AnimatedContainer(
+          duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
+          curve: _isDragging ? Curves.linear : Curves.easeInOut,
+          child: Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: _listHeight,
+            child: _buildDraggableList(currentPlaces),
+          ),
         ),
       ],
     );
@@ -345,10 +354,17 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
                       if (velocity < 0) {
                         // 위로 빠르게 드래그하면 최대 높이로 (SafeArea 고려)
                         _listHeight = _maxListHeight;
+                        _isExpanded = true;
                       } else {
                         // 아래로 빠르게 드래그하면 기본 높이로
                         _listHeight = 300.0;
+                        _isExpanded = false;
                       }
+                    });
+                  } else {
+                    // 일반적인 드래그 종료 시 현재 높이에 따라 확장 상태 업데이트
+                    setState(() {
+                      _isExpanded = _listHeight > _maxListHeight * 0.7;
                     });
                   }
                 },
@@ -389,11 +405,14 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
   Widget _buildDragHandle() {
     return GestureDetector(
       onTap: () {
-        // 탭으로도 리스트 높이 토글
+        // 핸들 탭으로 목록 확장/축소 토글
         setState(() {
-          if (_listHeight < _maxListHeight * 0.7) {
+          _isExpanded = !_isExpanded;
+          if (_isExpanded) {
+            // 확장: 최대 높이로
             _listHeight = _maxListHeight;
           } else {
+            // 축소: 기본 높이로
             _listHeight = 300.0;
           }
         });
@@ -406,7 +425,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[400],
+              color: _isExpanded ? const Color(0xFF7BB074) : Colors.grey[400],
               borderRadius: BorderRadius.circular(2),
             ),
           ),
