@@ -125,6 +125,8 @@ class NyamQueryNotifier extends StateNotifier<NyamQueryState> {
   }
 
   void selectStop(SelectedStop stop) {
+    print('🚏 정류장 선택: ${stop.name} (${stop.lat}, ${stop.lon})');
+
     state = state.copyWith(
       selectedStop: stop,
       centerLat: stop.lat,

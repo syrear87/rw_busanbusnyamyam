@@ -199,17 +199,29 @@ class BisApi {
       final items = BisHttp.items(doc);
       print('📊 정류장 목록 아이템 수: ${items.length}');
       
+      // 첫 번째 아이템의 XML 구조 확인
+      if (items.isNotEmpty) {
+        print('🔍 첫 번째 정류장 XML 구조:');
+        final firstItem = items.first;
+        for (final element in firstItem.children.whereType<xml.XmlElement>()) {
+          print('   - ${element.name.local}: "${element.text}"');
+        }
+      }
+      
       final list = items.map((e){
         String t(String k)=>e.findElements(k).firstOrNull?.innerText.trim()??'';
         final idx = int.tryParse(t('bstopidx').isNotEmpty ? t('bstopidx') : t('nodeord')) ?? 0;
         
+        final nodeid = t('nodeid').isNotEmpty ? t('nodeid') : t('bstopid');
+        final nodenm = t('nodenm').isNotEmpty ? t('nodenm') : t('bstopnm');
+        
         final stop = RouteStop(
-          nodeid: t('nodeid').isNotEmpty ? t('nodeid') : t('bstopid'),
-          nodenm: t('nodenm').isNotEmpty ? t('nodenm') : t('bstopnm'),
+          nodeid: nodeid,
+          nodenm: nodenm,
           arsno:  t('arsno').isNotEmpty ? t('arsno') : null,
           index:  idx,
-          lat:    double.tryParse(t('gpsy')) ?? double.tryParse(t('lat')) ?? 0,
-          lng:    double.tryParse(t('gpsx')) ?? double.tryParse(t('lng')) ?? 0,
+          lat:    double.tryParse(t('gpsy')) ?? double.tryParse(t('lat')) ?? 0.0,
+          lng:    double.tryParse(t('gpsx')) ?? double.tryParse(t('lng')) ?? 0.0,
           carno:  t('carno').isNotEmpty ? t('carno') : null,
         );
         
@@ -234,6 +246,7 @@ class BisApi {
       rethrow;
     }
   }
+
 
   /// 차량 위치(노선 별). 경로에 따라 routeStops 응답에 포함될 수 있어 분리 함수는 유연 파싱.
   static Future<List<VehiclePos>> vehiclePositions(String lineid) async {

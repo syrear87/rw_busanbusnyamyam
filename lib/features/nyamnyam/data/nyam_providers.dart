@@ -43,6 +43,11 @@ class PlacesNotifier extends AsyncNotifier<List<Place>> {
     final query = ref.watch(nyamQueryProvider);
     final queryHash = _generateQueryHash(query);
 
+    // 정류장이 선택된 경우 로그 출력
+    if (query.selectedStop != null) {
+      print('🚏 정류장 주변 검색: ${query.selectedStop!.name} (${query.radius}m)');
+    }
+
     // 동일한 파라미터로 중복 호출 방지
     if (_lastQueryHash == queryHash && _lastSuccessfulResult != null) {
       return _lastSuccessfulResult!;
@@ -68,13 +73,16 @@ class PlacesNotifier extends AsyncNotifier<List<Place>> {
 
         switch (result) {
           case Success(data: final places):
+            print('✅ 검색 완료: ${places.length}개 장소 발견');
             _lastQueryHash = queryHash;
             _lastSuccessfulResult = places;
             completer.complete(places);
           case Failure(message: final message):
+            print('❌ 검색 실패: $message');
             completer.completeError(Exception(message));
         }
       } catch (e) {
+        print('💥 검색 오류: $e');
         completer.completeError(e);
       }
     });

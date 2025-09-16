@@ -60,206 +60,207 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
   }
 
   Widget _buildRadiusPillButton(BuildContext context, NyamQueryState query) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.location_on, color: Color(0xFF7BB074), size: 16),
-          const SizedBox(width: 4),
-          Text(
-            '${query.radius}m',
-            style: const TextStyle(
-              fontFamily: 'Dongle',
-              fontSize: 16,
-              color: Color(0xFF7BB074),
-              fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: const Text(
+                '반경 선택',
+                style: TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 20,
+                  color: Color(0xFF7BB074),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              children: [200, 400, 700].map((int radius) {
+                return SimpleDialogOption(
+                  onPressed: () {
+                    ref.read(nyamQueryProvider.notifier).updateRadius(radius);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    '${radius}m',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 18,
+                      color: query.radius == radius
+                          ? const Color(0xFF7BB074)
+                          : Colors.black87,
+                      fontWeight: query.radius == radius
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 4),
-          PopupMenuButton<int>(
-            icon: const Icon(
-              Icons.keyboard_arrow_down,
-              color: Color(0xFF7BB074),
-              size: 16,
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.location_on, color: Color(0xFF7BB074), size: 16),
+            const SizedBox(width: 4),
+            Text(
+              '${query.radius}m',
+              style: const TextStyle(
+                fontFamily: 'Dongle',
+                fontSize: 16,
+                color: Color(0xFF7BB074),
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            onSelected: (int radius) {
-              ref.read(nyamQueryProvider.notifier).updateRadius(radius);
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<int>(
-                value: 200,
-                child: Text(
-                  '200m',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.radius == 200
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.radius == 200
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-              PopupMenuItem<int>(
-                value: 400,
-                child: Text(
-                  '400m',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.radius == 400
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.radius == 400
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-              PopupMenuItem<int>(
-                value: 700,
-                child: Text(
-                  '700m',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.radius == 700
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.radius == 700
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCategoryPillButton(BuildContext context, NyamQueryState query) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            query.category == QueryCategory.restaurant
-                ? Icons.restaurant
-                : query.category == QueryCategory.cafe
-                ? Icons.local_cafe
-                : Icons.category,
-            color: const Color(0xFF7BB074),
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            query.category == QueryCategory.all
-                ? '전체'
-                : query.category == QueryCategory.restaurant
-                ? '음식점'
-                : '카페',
-            style: const TextStyle(
-              fontFamily: 'Dongle',
-              fontSize: 16,
-              color: Color(0xFF7BB074),
-              fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: const Text(
+                '카테고리 선택',
+                style: TextStyle(
+                  fontFamily: 'Dongle',
+                  fontSize: 20,
+                  color: Color(0xFF7BB074),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              children: [
+                SimpleDialogOption(
+                  onPressed: () {
+                    ref.read(nyamQueryProvider.notifier).updateCategory(QueryCategory.all);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    '전체',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 18,
+                      color: query.category == QueryCategory.all
+                          ? const Color(0xFF7BB074)
+                          : Colors.black87,
+                      fontWeight: query.category == QueryCategory.all
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    ref.read(nyamQueryProvider.notifier).updateCategory(QueryCategory.restaurant);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    '음식점',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 18,
+                      color: query.category == QueryCategory.restaurant
+                          ? const Color(0xFF7BB074)
+                          : Colors.black87,
+                      fontWeight: query.category == QueryCategory.restaurant
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    ref.read(nyamQueryProvider.notifier).updateCategory(QueryCategory.cafe);
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    '카페',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 18,
+                      color: query.category == QueryCategory.cafe
+                          ? const Color(0xFF7BB074)
+                          : Colors.black87,
+                      fontWeight: query.category == QueryCategory.cafe
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 4),
-          PopupMenuButton<QueryCategory>(
-            icon: const Icon(
-              Icons.keyboard_arrow_down,
-              color: Color(0xFF7BB074),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              query.category == QueryCategory.restaurant
+                  ? Icons.restaurant
+                  : query.category == QueryCategory.cafe
+                  ? Icons.local_cafe
+                  : Icons.category,
+              color: const Color(0xFF7BB074),
               size: 16,
             ),
-            onSelected: (QueryCategory category) {
-              ref.read(nyamQueryProvider.notifier).updateCategory(category);
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<QueryCategory>(
-                value: QueryCategory.all,
-                child: Text(
-                  '전체',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.category == QueryCategory.all
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.category == QueryCategory.all
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
+            const SizedBox(width: 4),
+            Text(
+              query.category == QueryCategory.all
+                  ? '전체'
+                  : query.category == QueryCategory.restaurant
+                  ? '음식점'
+                  : '카페',
+              style: const TextStyle(
+                fontFamily: 'Dongle',
+                fontSize: 16,
+                color: Color(0xFF7BB074),
+                fontWeight: FontWeight.w500,
               ),
-              PopupMenuItem<QueryCategory>(
-                value: QueryCategory.restaurant,
-                child: Text(
-                  '음식점',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.category == QueryCategory.restaurant
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.category == QueryCategory.restaurant
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-              PopupMenuItem<QueryCategory>(
-                value: QueryCategory.cafe,
-                child: Text(
-                  '카페',
-                  style: TextStyle(
-                    fontFamily: 'Dongle',
-                    fontSize: 16,
-                    color: query.category == QueryCategory.cafe
-                        ? const Color(0xFF7BB074)
-                        : Colors.black87,
-                    fontWeight: query.category == QueryCategory.cafe
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStopPillButton(BuildContext context) {
+    final query = ref.watch(nyamQueryProvider);
+    final hasSelectedStop = query.selectedStop != null;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenWidth = MediaQuery.of(context).size.width;
@@ -284,7 +285,7 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white, // 항상 흰색 배경 유지
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -298,13 +299,17 @@ class _NyamMapScreenState extends ConsumerState<NyamMapScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
-                      Icons.directions_bus,
+                      Icons.directions_bus, // 항상 버스 아이콘 유지
                       color: Color(0xFF7BB074),
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '정류장',
+                      hasSelectedStop
+                          ? (query.selectedStop!.name.length > 10
+                              ? '${query.selectedStop!.name.substring(0, 10)}...'
+                              : query.selectedStop!.name)
+                          : '정류장',
                       style: const TextStyle(
                         fontFamily: 'Dongle',
                         fontSize: 16,

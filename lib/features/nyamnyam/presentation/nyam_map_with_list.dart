@@ -29,13 +29,28 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
   int? selectedPlaceIndex;
   GoogleMapController? _mapController;
   ScrollController? _listScrollController;
+  NyamQueryState? _previousQuery;
 
   @override
   Widget build(BuildContext context) {
+    // 실시간으로 상태를 읽어옴
+    final currentQuery = ref.watch(nyamQueryProvider);
+    final currentLocation = ref.watch(locationProvider);
+    final currentPlaces = ref.watch(placesProvider);
+
+    // 쿼리 변경 감지하여 맵 이동
+    ref.listen(nyamQueryProvider, (previous, next) {
+      if (previous != null &&
+          _mapController != null &&
+          (previous.centerLat != next.centerLat || previous.centerLon != next.centerLon)) {
+        _animateToLocation(next.centerLat, next.centerLon);
+      }
+    });
+
     return Stack(
       children: [
-        // 지도
-        _buildMap(widget.query, widget.location, widget.places),
+        // 지도 - 실시간 상태 사용
+        _buildMap(currentQuery, currentLocation, currentPlaces),
 
         // 하단 Attribution (필수)
         Positioned(
@@ -59,12 +74,12 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
         ),
 
         // 에러 스낵바
-        if (widget.location.error != null)
+        if (currentLocation.error != null)
           Positioned(
             top: 16,
             left: 16,
             right: 16,
-            child: _buildErrorSnackBar(widget.location.error!),
+            child: _buildErrorSnackBar(currentLocation.error!),
           ),
 
         // 하단 리스트 (30-70% 드래그 가능)
@@ -108,7 +123,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
                     child: Row(
                       children: [
                         Text(
-                          widget.places.when(
+                          currentPlaces.when(
                             data: (places) => '${places.length}개 장소',
                             loading: () => '검색 중...',
                             error: (_, __) => '오류',
@@ -137,7 +152,7 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
 
                   // 리스트 내용
                   Expanded(
-                    child: widget.places.when(
+                    child: currentPlaces.when(
                       data: (places) => places.isEmpty
                           ? _buildEmptyState()
                           : ListView.builder(
@@ -183,13 +198,18 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     final Set<Marker> markers = {};
     final Set<Circle> circles = {};
 
-    // Add center marker
+    // Add center marker (정류장 또는 기준 위치)
     markers.add(
       Marker(
         markerId: const MarkerId('center'),
         position: center,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: const InfoWindow(title: '기준 위치'),
+        icon: query.selectedStop != null
+            ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue)
+            : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        infoWindow: InfoWindow(
+          title: query.selectedStop?.name ?? '기준 위치',
+          snippet: query.selectedStop != null ? '선택된 정류장' : null,
+        ),
       ),
     );
 
