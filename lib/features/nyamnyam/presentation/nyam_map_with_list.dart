@@ -271,6 +271,13 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       myLocationButtonEnabled: false,
       zoomControlsEnabled: true,
       mapToolbarEnabled: false,
+      compassEnabled: true,
+      rotateGesturesEnabled: true,
+      scrollGesturesEnabled: true,
+      tiltGesturesEnabled: true,
+      zoomGesturesEnabled: true,
+      liteModeEnabled: false,
+      mapType: MapType.normal,
       onCameraMove: (CameraPosition position) {
         ref
             .read(nyamQueryProvider.notifier)

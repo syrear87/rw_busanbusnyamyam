@@ -3,7 +3,24 @@
     "allow": [
       "Bash(flutter run:*)",
       "Bash(flutter analyze:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(flutter logs:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(xcrun devicectl list:*)",
+      "Bash(xcrun devicectl log stream:*)",
+      "Bash(log stream:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(pod install:*)",
+      "Bash(flutter build:*)",
+      "Bash(xcrun devicectl log show:*)",
+      "Bash(xcrun devicectl:*)",
+      "Bash(open:*)",
+      "Bash(adb:*)",
+      "Bash(flutter clean:*)",
+      "Bash(./gradlew:*)",
+      "Bash(keytool:*)",
+      "Read(//Users/shukim/.android/**)"
     ],
     "deny": [],
     "ask": []

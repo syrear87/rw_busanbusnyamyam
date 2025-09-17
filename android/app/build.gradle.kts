@@ -39,14 +39,24 @@ android {
             lp.load(FileInputStream(lpf))
         }
         val mapsKey = lp.getProperty("MAPS_ANDROID_KEY") ?: System.getenv("MAPS_ANDROID_KEY") ?: ""
+        println("🗺️ MAPS_ANDROID_KEY loaded: ${mapsKey.take(10)}...")
         manifestPlaceholders["MAPS_ANDROID_KEY"] = mapsKey
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = "release-key"
+            keyPassword = "busanbusnyamyam"
+            storeFile = file("app-release-key.keystore")
+            storePassword = "busanbusnyamyam"
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
