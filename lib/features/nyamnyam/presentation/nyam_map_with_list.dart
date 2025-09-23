@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -33,6 +34,7 @@ class MapWithListView extends ConsumerStatefulWidget {
 class _MapWithListViewState extends ConsumerState<MapWithListView> {
   int? selectedPlaceIndex;
   GoogleMapController? _mapController;
+  String? _selectedMarkerId;
   
   // 드래그 가능한 리스트 상태 관리
   double _listHeight = 300.0; // 기본 리스트 높이
@@ -205,29 +207,33 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       ),
     );
 
-    // Add place markers
+    // Add place markers (선택된 마커만 표시)
     places.whenData((placeList) {
       for (int index = 0; index < placeList.length; index++) {
         final place = placeList[index];
-
-        markers.add(
-          Marker(
-            markerId: MarkerId('place_$index'),
-            position: LatLng(place.lat, place.lon),
-            icon: place.category == PlaceCategory.restaurant
-                ? BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueOrange,
-                  )
-                : BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueRed,
-                  ),
-            infoWindow: InfoWindow(
-              title: place.name,
-              snippet: '${place.distanceMeters}m · ${place.category.value}',
+        
+        // 선택된 마커만 표시
+        if (selectedPlaceIndex == index) {
+          markers.add(
+            Marker(
+              markerId: MarkerId('place_$index'),
+              position: LatLng(place.lat, place.lon),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueRed,
+              ),
+              infoWindow: InfoWindow(
+                title: place.name,
+                snippet: _buildInfoWindowSnippet(place),
+                onTap: () {
+                  if (place.address != null) {
+                    _copyAddressToClipboard(place.address!);
+                  }
+                },
+              ),
+              onTap: () => _onMarkerTapped(index, place),
             ),
-            onTap: () => _onMarkerTapped(index, place),
-          ),
-        );
+          );
+        }
       }
     });
 
@@ -269,22 +275,21 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
       circles: circles,
       myLocationEnabled: true,
       myLocationButtonEnabled: false,
-      zoomControlsEnabled: true,
+      zoomControlsEnabled: false,
       mapToolbarEnabled: false,
-      compassEnabled: true,
-      rotateGesturesEnabled: true,
-      scrollGesturesEnabled: true,
-      tiltGesturesEnabled: true,
-      zoomGesturesEnabled: true,
+      compassEnabled: false,
+      rotateGesturesEnabled: false,
+      scrollGesturesEnabled: false,
+      tiltGesturesEnabled: false,
+      zoomGesturesEnabled: false,
       liteModeEnabled: false,
       mapType: MapType.normal,
-      onCameraMove: (CameraPosition position) {
-        ref
-            .read(nyamQueryProvider.notifier)
-            .updateFromMapCenter(
-              position.target.latitude,
-              position.target.longitude,
-            );
+      onCameraMove: null,
+      onTap: (LatLng position) {
+        // 지도 터치 시 툴팁 닫기
+        setState(() {
+          _selectedMarkerId = null;
+        });
       },
     );
   }
@@ -448,9 +453,19 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
   void _onMarkerTapped(int index, Place place) {
     setState(() {
       selectedPlaceIndex = index;
+      _selectedMarkerId = 'place_$index';
     });
 
-    // 지도 카메라를 선택된 장소로 이동 (선택 마커 scale 애니메이션)
+    // 마커 터치 시 지도 이동 없음 (핀 색깔만 변경)
+  }
+
+  void _onPlaceSelected(int index, Place place) {
+    setState(() {
+      selectedPlaceIndex = index;
+      _selectedMarkerId = 'place_$index';
+    });
+
+    // 리스트 선택 시 해당 마커 좌표 중심으로 지도 이동
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(target: LatLng(place.lat, place.lon), zoom: 16.0),
@@ -458,15 +473,30 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
     );
   }
 
-  void _onPlaceSelected(int index, Place place) {
-    setState(() {
-      selectedPlaceIndex = index;
-    });
+  String _buildInfoWindowSnippet(Place place) {
+    String snippet = '${place.distanceMeters}m · ${place.category.value}';
+    if (place.address != null) {
+      snippet += '\n${place.address}';
+    }
+    if (place.phone != null && place.phone!.isNotEmpty) {
+      snippet += '\n${place.phone}';
+    }
+    return snippet;
+  }
 
-    // 지도 카메라를 선택된 장소로 이동
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(place.lat, place.lon), zoom: 16.0),
+  void _copyAddressToClipboard(String address) {
+    Clipboard.setData(ClipboardData(text: address));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '주소가 복사되었습니다',
+          style: const TextStyle(
+            fontFamily: 'Dongle',
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: AppColors.primarySage,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -709,9 +739,7 @@ class PlaceListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primarySage.withOpacity(0.1)
-            : AppColors.ivorySurface,
+        color: AppColors.ivorySurface,
         borderRadius: BorderRadius.circular(12),
         border: isSelected
             ? Border.all(color: AppColors.primarySage, width: 2)
@@ -805,34 +833,24 @@ class PlaceListItem extends StatelessWidget {
                   ),
                 ),
 
-                // 소스 배지와 화살표
-                Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySage.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        place.source.value,
-                        style: const TextStyle(
-                          fontFamily: 'Dongle',
-                          fontSize: 12,
-                          color: AppColors.primarySage,
-                        ),
-                      ),
+                // 소스 배지
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySage.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    place.source.value,
+                    style: const TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 12,
+                      color: AppColors.primarySage,
                     ),
-                    const SizedBox(height: 8),
-                    Icon(
-                      Icons.chevron_right,
-                      color: isSelected ? AppColors.primarySage : AppColors.textMuted,
-                      size: 20,
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
