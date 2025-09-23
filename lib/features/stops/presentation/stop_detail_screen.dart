@@ -158,7 +158,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
         : ref.watch(stopArrivalsProvider(stopMeta));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC), // 테마 배경색
+      backgroundColor: AppColors.ivoryBase,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -177,7 +177,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFF0DFCC), // 테마 배경색과 통일
+        backgroundColor: AppColors.ivoryBase,
         elevation: 0,
         foregroundColor: AppColors.accent,
         actions: [

@@ -1,177 +1,155 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/refresh_interval_provider.dart';
 import '../data/package_info_provider.dart';
 import '../../../../widgets/top_banner_ad_widget.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final refreshInterval = ref.watch(refreshIntervalProvider);
     final packageInfoAsync = ref.watch(packageInfoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
-      body: Column(
-        children: [
-          // 상단 배너 광고
-          const TopBannerAdWidget(),
-
-          // 메인 콘텐츠
-          Expanded(
-            child: ListView(
-              children: [
-          // 새로고침 간격
-          ListTile(
-            title: const Text('새로고침 간격'),
-            subtitle: Text(refreshInterval.displayName),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => _showRefreshIntervalDialog(context, ref),
-          ),
-          const Divider(),
-
-          // 개인정보처리방침
-          ListTile(
-            title: const Text('개인정보처리방침'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => _openPrivacyPolicy(),
-          ),
-          const Divider(),
-
-          // 버전 정보
-          ListTile(
-            title: const Text('버전 정보'),
-            subtitle: packageInfoAsync.when(
-              data: (info) =>
-                  Text('${info.appName} ${info.version} (${info.buildNumber})'),
-              loading: () => const Text('로딩 중...'),
-              error: (_, __) => const Text('정보를 불러올 수 없습니다'),
-            ),
-            onTap: () => _showVersionInfo(context, packageInfoAsync),
-          ),
-          const Divider(),
-
-          // 정보 제공처 표시
-          ListTile(
-            title: const Text('정보 제공처 표시'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => _showDataSources(context),
-          ),
-          const Divider(),
-
-          // 캐시 삭제
-          ListTile(
-            title: const Text('캐시 삭제'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () => _clearCache(context),
-          ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRefreshIntervalDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('새로고침 간격'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: RefreshInterval.values.map((interval) {
-            return RadioListTile<RefreshInterval>(
-              title: Text(interval.displayName),
-              value: interval,
-              groupValue: ref.read(refreshIntervalProvider),
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(refreshIntervalProvider.notifier).setInterval(value);
-                  Navigator.of(context).pop();
-                }
-              },
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openPrivacyPolicy() async {
-    const url = 'https://example.com/privacy-policy';
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  void _showVersionInfo(
-    BuildContext context,
-    AsyncValue<AppInfo> packageInfoAsync,
-  ) {
-    packageInfoAsync.when(
-      data: (info) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('버전 정보'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('앱 이름: ${info.appName}'),
-                Text('버전: ${info.version}'),
-                Text('빌드 번호: ${info.buildNumber}'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
-      },
-      loading: () => null,
-      error: (_, __) => null,
-    );
-  }
-
-  void _showDataSources(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('정보 제공처'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: AppColors.ivoryBase, // 테마 배경색
+      body: SafeArea(
+        child: Column(
           children: [
-            Text('• 부산버스정보시스템(OpenAPI)'),
-            SizedBox(height: 8),
-            Text('• 카카오맵 장소검색'),
-            SizedBox(height: 8),
-            Text('• OpenStreetMap tiles'),
+            // 상단 배너 광고
+            const TopBannerAdWidget(),
+
+            // 메인 콘텐츠
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // 앱 정보 섹션
+                  _buildAppInfoSection(context, packageInfoAsync),
+                ],
+              ),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인'),
+      ),
+    );
+  }
+
+  Widget _buildAppInfoSection(BuildContext context, AsyncValue<AppInfo> packageInfoAsync) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: AppColors.accent),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '앱 정보',
+              style: TextStyle(
+                fontFamily: 'Dongle',
+                fontSize: 23,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textStrong,
+              ),
+            ),
+          ),
+          Divider(height: 1, color: AppColors.divider),
+          
+          // 개인정보처리방침
+          _buildInfoTile(
+            icon: Icons.info_outline,
+            title: '개인정보처리방침',
+            subtitle: '개인정보 수집 및 이용에 대한 안내',
+            onTap: () => context.go('/webview', extra: {
+              'url': 'https://syrear87.github.io/busanbusnyamyam-privacy-Policy/',
+              'title': '개인정보처리방침',
+              'returnPath': '/settings',
+            }),
+          ),
+          
+          Divider(height: 1, color: AppColors.divider),
+          
+          // 광고 포함 앱
+          _buildInfoTile(
+            icon: Icons.ads_click,
+            title: '광고 포함 앱',
+            subtitle: '이 앱은 Google AdMob을 통해 광고를 제공합니다.',
+            onTap: null,
+          ),
+          
+          Divider(height: 1, color: AppColors.divider),
+          
+          // 앱 버전
+          _buildInfoTile(
+            icon: Icons.info_outline,
+            title: '앱 버전',
+            subtitle: packageInfoAsync.when(
+              data: (info) => '버전 ${info.version} - 최신 버전입니다.',
+              loading: () => '로딩 중...',
+              error: (_, __) => '정보를 불러올 수 없습니다',
+            ),
+            onTap: null,
+          ),
+          
+          Divider(height: 1, color: AppColors.divider),
+          
+          // 사용 기술
+          _buildInfoTile(
+            icon: Icons.code,
+            title: '사용 기술',
+            subtitle: '별도 페이지에서 사용한 기술을 보여줍니다.',
+            onTap: () => context.go('/technologies'),
           ),
         ],
       ),
     );
   }
 
-  void _clearCache(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('캐시 삭제 완료'), duration: Duration(seconds: 2)),
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.primarySage),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Dongle',
+          fontWeight: FontWeight.w500,
+          fontSize: 19,
+          color: AppColors.textBody,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(
+          fontFamily: 'Dongle',
+          color: AppColors.textMuted,
+          fontSize: 15,
+        ),
+      ),
+      trailing: onTap != null 
+        ? const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textMuted)
+        : null,
+      onTap: onTap,
     );
   }
+
 }

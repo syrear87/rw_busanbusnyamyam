@@ -58,6 +58,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   Widget build(BuildContext context) {
     return Container(
       margin: widget.margin,
+      height: widget.adSize.height.toDouble(),
       child: _isAdLoaded && _bannerAd != null
           ? AdWidget(ad: _bannerAd!)
           : _buildFallbackWidget(),

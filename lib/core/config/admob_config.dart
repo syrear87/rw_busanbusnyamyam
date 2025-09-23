@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class AdMobConfig {
   // Android AdMob IDs
   static const String androidAppId = 'ca-app-pub-9521594552515663~3304973425';
@@ -33,7 +35,7 @@ class AdMobConfig {
   
   // Check if running in test mode
   static bool get isTestMode {
-    // You can set this to true during development
-    return false; // Set to true for testing with test ads
+    // 디버그 모드에서는 자동으로 테스트 광고 사용
+    return kDebugMode;
   }
 }

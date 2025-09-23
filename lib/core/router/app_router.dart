@@ -7,6 +7,7 @@ import '../../features/routes/presentation/routes_screen.dart';
 import '../../features/routes/presentation/route_detail_screen.dart';
 import '../../features/nyamnyam/presentation/nyamnyam_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/settings/presentation/technologies_screen.dart';
 import '../../features/webview/presentation/webview_screen.dart';
 import 'app_shell.dart';
 
@@ -54,6 +55,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/routes/:lineid',
         builder: (context, state) => const RouteDetailScreen(),
+      ),
+      // 사용 기술 페이지 (Shell 밖에 배치하여 하단 탭바 숨김)
+      GoRoute(
+        path: '/technologies',
+        builder: (context, state) => const TechnologiesScreen(),
       ),
       // 웹뷰 페이지 (Shell 밖에 배치하여 독립적인 화면으로 표시)
       GoRoute(

@@ -30,7 +30,8 @@
       "Bash(pkill:*)",
       "Bash(flutter:*)",
       "Bash(nc:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
