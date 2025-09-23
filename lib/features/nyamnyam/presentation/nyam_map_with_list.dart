@@ -828,68 +828,44 @@ class PlaceListItem extends StatelessWidget {
                   ),
                 ),
 
-                // 소스 배지와 주소 복사 버튼
-                Column(
-                  children: [
-                    Container(
+                // 주소 복사 버튼 (세로 중앙)
+                if (place.address != null)
+                  GestureDetector(
+                    onTap: () => _copyAddressToClipboard(context, place.address!),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primarySage.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        place.source.value,
-                        style: const TextStyle(
-                          fontFamily: 'Dongle',
-                          fontSize: 12,
-                          color: AppColors.primarySage,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppColors.primarySage.withOpacity(0.3),
+                          width: 1,
                         ),
                       ),
-                    ),
-                    if (place.address != null) ...[
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () => _copyAddressToClipboard(context, place.address!),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.copy,
+                            size: 12,
+                            color: AppColors.primarySage,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySage.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: AppColors.primarySage.withOpacity(0.3),
-                              width: 1,
+                          const SizedBox(width: 4),
+                          Text(
+                            '주소 복사',
+                            style: TextStyle(
+                              fontFamily: 'Dongle',
+                              fontSize: 11,
+                              color: AppColors.primarySage,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.copy,
-                                size: 12,
-                                color: AppColors.primarySage,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '주소 복사',
-                                style: TextStyle(
-                                  fontFamily: 'Dongle',
-                                  fontSize: 11,
-                                  color: AppColors.primarySage,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
               ],
             ),
           ),
