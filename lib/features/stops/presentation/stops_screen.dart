@@ -50,7 +50,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
   Timer? _autoRefreshTimer; // 자동 새로고침 타이머
   bool _isAutoRefreshing = false; // 자동 새로고침 중인지
   bool _isTabActive = true; // 탭이 활성화되어 있는지
-  int _autoRefreshCountdown = 60; // 다음 새로고침까지 남은 시간 (초)
+  int _autoRefreshCountdown = 15; // 다음 새로고침까지 남은 시간 (초)
   Timer? _countdownTimer; // 카운트다운 타이머
 
   @override
@@ -220,7 +220,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
     });
   }
 
-  // 자동 새로고침 타이머 시작 (1분 = 60초)
+  // 자동 새로고침 타이머 시작 (15초)
   void _startAutoRefreshTimer() {
     _autoRefreshTimer?.cancel();
     _countdownTimer?.cancel();
@@ -238,8 +238,8 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
       }
     });
 
-    // 자동 새로고침 타이머 시작 (2분마다) - 성능 최적화
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
+    // 자동 새로고침 타이머 시작 (15초마다) - 성능 최적화
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (_isTabActive && !_isAutoRefreshing) {
         _performAutoRefresh();
       }

@@ -19,10 +19,10 @@ class StopDetailScreen extends ConsumerStatefulWidget {
 
 class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
     with TickerProviderStateMixin {
-  Timer? _refreshTimer; // 30초 후 API 호출용 타이머
+  Timer? _refreshTimer; // 15초 후 API 호출용 타이머
   Timer? _countdownTimer; // 카운트다운 타이머
   AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
-  int _countdownSeconds = 30; // 30초 카운트다운
+  int _countdownSeconds = 15; // 15초 카운트다운
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
         print(
           '📍 정류장 상세 진입: 정류장 탭 데이터 활용 - ${stopFromTabs.s.name} (거리: ${stopFromTabs.m}m)',
         );
-        // 30초 후 API 호출하여 최신화
+        // 15초 후 API 호출하여 최신화
         _startRefreshTimer(bstopid);
         // 카운트다운 타이머 시작
         _startCountdownTimer();
@@ -57,10 +57,10 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
     });
   }
 
-  // 30초 후 API 호출 타이머 시작
+  // 15초 후 API 호출 타이머 시작
   void _startRefreshTimer(String bstopid) {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer(const Duration(seconds: 30), () {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
         // 정류장 탭 데이터가 있으면 해당 ARS 번호로 API 호출
         final stopFromTabs = ref.read(stopDetailFromTabsProvider(bstopid));
@@ -75,10 +75,7 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
           });
         }
         // 카운트다운 리셋
-        _countdownSeconds = 30;
-
-        // 다음 30초 타이머 시작
-        _startRefreshTimer(bstopid);
+        _countdownSeconds = 15;
       }
     });
   }

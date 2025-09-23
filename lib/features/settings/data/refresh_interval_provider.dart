@@ -13,7 +13,7 @@ enum RefreshInterval {
 }
 
 class RefreshIntervalNotifier extends StateNotifier<RefreshInterval> {
-  RefreshIntervalNotifier() : super(RefreshInterval.thirtySeconds) {
+  RefreshIntervalNotifier() : super(RefreshInterval.fifteenSeconds) {
     _loadFromPrefs();
   }
 
@@ -21,7 +21,7 @@ class RefreshIntervalNotifier extends StateNotifier<RefreshInterval> {
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final index = prefs.getInt(_key) ?? 1; // 기본값: 30초
+    final index = prefs.getInt(_key) ?? 0; // 기본값: 15초
     state = RefreshInterval.values[index];
   }
 

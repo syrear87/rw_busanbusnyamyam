@@ -69,6 +69,7 @@ final arrivalSortProvider = StateProvider<ArrivalSort>(
 class BisApiClient {
   static const String _baseUrl = 'http://apis.data.go.kr/6260000/BusanBIMS';
   static const String _env = String.fromEnvironment('BIS_SERVICE_KEY');
+  static final Map<String, DateTime> _lastCallTimes = {}; // API 호출 제한을 위한 캐시
 
   static String get _serviceKey {
     if (_env.isNotEmpty) {
@@ -79,6 +80,15 @@ class BisApiClient {
 
   static Future<List<ArrivalItem>> fetchArrivalsByStopId(String bstopid) async {
     try {
+      // API 호출 제한 (5초 내 중복 호출 방지)
+      final now = DateTime.now();
+      final lastCall = _lastCallTimes[bstopid];
+      if (lastCall != null && now.difference(lastCall).inSeconds < 5) {
+        print('🚌 API 호출 제한: ${bstopid} (${now.difference(lastCall).inSeconds}초 전 호출됨)');
+        return [];
+      }
+      _lastCallTimes[bstopid] = now;
+      
       print('🚌 BIS API 호출 시작 (bstopid: $bstopid)');
       final uri = Uri.parse('$_baseUrl/stopArrByBstopid').replace(
         queryParameters: {
@@ -107,6 +117,15 @@ class BisApiClient {
 
   static Future<List<ArrivalItem>> fetchArrivalsByArsno(String arsno) async {
     try {
+      // API 호출 제한 (5초 내 중복 호출 방지)
+      final now = DateTime.now();
+      final lastCall = _lastCallTimes[arsno];
+      if (lastCall != null && now.difference(lastCall).inSeconds < 5) {
+        print('🚌 API 호출 제한: ${arsno} (${now.difference(lastCall).inSeconds}초 전 호출됨)');
+        return [];
+      }
+      _lastCallTimes[arsno] = now;
+      
       print('🚌 BIS API 호출 시작 (arsno: $arsno)');
       final uri = Uri.parse('$_baseUrl/bitArrByArsno').replace(
         queryParameters: {
@@ -184,6 +203,7 @@ final stopArrivalsProvider = FutureProvider.family<List<ArrivalItem>, StopMeta>(
 
     // 결과가 없고 arsno가 있으면 arsno로 재시도
     if (arrivals.isEmpty && stopMeta.arsno.isNotEmpty) {
+      print('🚌 bstopid로 결과 없음, arsno로 재시도: ${stopMeta.arsno}');
       arrivals = await BisApiClient.fetchArrivalsByArsno(stopMeta.arsno);
     }
 
@@ -191,9 +211,9 @@ final stopArrivalsProvider = FutureProvider.family<List<ArrivalItem>, StopMeta>(
   },
 );
 
-// 자동 새로고침 ticker (60초 간격으로 설정 - 성능 최적화)
+// 자동 새로고침 ticker (15초 간격으로 설정 - 성능 최적화)
 final autoRefreshTickerProvider = StreamProvider.autoDispose<DateTime>((ref) {
-  return Stream.periodic(const Duration(seconds: 60), (_) => DateTime.now());
+  return Stream.periodic(const Duration(seconds: 15), (_) => DateTime.now());
 });
 
 // 정류장 상세페이지에서 정류장 탭의 데이터를 가져오는 provider

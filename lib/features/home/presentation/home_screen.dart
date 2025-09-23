@@ -8,6 +8,7 @@ import '../../stops/data/stops_provider.dart';
 import '../../stops/data/stop_model.dart';
 import '../../stops/data/bus_arrival_provider.dart';
 import '../../stops/data/bus_arrival_model.dart';
+import '../../stops/presentation/stop_detail_screen.dart';
 import '../../routes/presentation/route_detail_screen.dart';
 import '../../../../data/busan_bis_api.dart';
 import '../../../../widgets/top_banner_ad_widget.dart';
@@ -15,12 +16,9 @@ import '../../../../widgets/top_banner_ad_widget.dart';
 // 노선 정보를 위한 Provider
 final routeInfoProvider = FutureProvider.family<RouteMeta?, String>((ref, lineid) async {
   try {
-    print('🏠 홈탭 노선 정보 요청: $lineid');
     final result = await BisApi.routeInfo(lineid);
-    print('🏠 홈탭 노선 정보 성공: ${result.lineno}번');
     return result;
   } catch (e) {
-    print('🏠 홈탭 노선 정보 실패: $lineid - $e');
     
     // 실패한 경우 기본 RouteMeta 생성 (노선 정보 없이 표시)
     return RouteMeta(
@@ -51,7 +49,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Timer? _refreshTimer;
   Timer? _countdownTimer; // 카운트다운 타이머
   AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
-  int _countdownSeconds = 30; // 30초 카운트다운
+  int _countdownSeconds = 15; // 15초 카운트다운
+  bool _isRefreshing = false; // 갱신 중인지 상태
 
   @override
   void initState() {
@@ -78,9 +77,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 카운트다운 타이머 시작
     _startCountdownTimer();
     
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
-        print('🔄 홈 탭 30초 자동 갱신 실행');
+        print('🔄 홈 탭 15초 자동 갱신 실행');
         
         // 새로고침 애니메이션 시작
         _refreshAnimationController?.repeat();
@@ -90,10 +89,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           _refreshAnimationController?.reset();
         });
         
+        // 실제 데이터 갱신
+        _performRefresh();
+        
         // 카운트다운 리셋
-        _countdownSeconds = 30;
+        _countdownSeconds = 15;
       }
     });
+  }
+  
+  // 실제 데이터 갱신 수행
+  void _performRefresh() {
+    setState(() {
+      _isRefreshing = true;
+    });
+    
+    // 즐겨찾는 정류장의 도착정보 갱신
+    final favoriteStops = ref.read(favoriteStopsProvider);
+    for (final stopId in favoriteStops) {
+      // 정류장 상세 정보 갱신 (도착정보 포함)
+      ref.invalidate(stopDetailFromTabsProvider(stopId));
+    }
+    
+    // 정류장 목록 갱신
+    ref.invalidate(stopsProvider);
+    
+    // 갱신 완료 후 상태 리셋 (2초 후)
+    Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    });
+    
+    print('🔄 홈 탭 데이터 갱신 완료');
   }
   
   // 카운트다운 타이머 시작
@@ -106,7 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         });
 
         if (_countdownSeconds <= 0) {
-          _countdownSeconds = 30; // 리셋
+          _countdownSeconds = 15; // 리셋
         }
       }
     });
@@ -202,9 +232,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // 즐겨찾기 노선 섹션
   Widget _buildFavoriteRoutesSection() {
     final favoriteRoutes = ref.watch(favoriteRoutesProvider);
-    
-    // 즐겨찾는 노선 ID들 로그 출력
-    print('🏠 즐겨찾는 노선 IDs: ${favoriteRoutes.toList()}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,6 +269,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final arrivalsAsync = stop.arsno.isNotEmpty 
         ? ref.watch(busArrivalProvider(stop.arsno))
         : null;
+    
+    // 갱신 중일 때 스켈레톤 표시
+    if (_isRefreshing) {
+      return _buildStopCardSkeleton(stop);
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -748,6 +780,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  // 정류장 카드 스켈레톤
+  Widget _buildStopCardSkeleton(Stop stop) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: AppColors.accent),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 정류장 이름과 ARS 번호
+            Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 80,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // 도착 정보 스켈레톤
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

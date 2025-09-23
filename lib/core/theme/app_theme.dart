@@ -79,9 +79,14 @@ class AppTheme {
           ),
         ),
         iconTheme: WidgetStatePropertyAll(
-          IconThemeData(color: AppColors.primarySage),
+          IconThemeData(
+            color: AppColors.primarySage,
+            size: 24,
+          ),
         ),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
       ),
       listTileTheme: const ListTileThemeData(
         iconColor: AppColors.primarySage,

@@ -84,7 +84,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
     print('   - 제목: ${widget.title}');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC), // 테마 배경색
+      backgroundColor: AppColors.ivoryBase, // 테마 배경색
       appBar: AppBar(
         title: Text(
           widget.title,
@@ -95,7 +95,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFF0DFCC), // 테마 배경색과 통일
+        backgroundColor: AppColors.ivoryBase, // 테마 배경색과 통일
         elevation: 0,
         foregroundColor: AppColors.accent,
         leading: IconButton(

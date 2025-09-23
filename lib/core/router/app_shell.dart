@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../theme/app_colors.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -87,54 +88,94 @@ class _AppShellState extends ConsumerState<AppShell>
         position: _slideAnimation,
         child: widget.child,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              context.go('/home');
-              break;
-            case 1:
-              context.go('/stops');
-              break;
-            case 2:
-              context.go('/routes');
-              break;
-            case 3:
-              context.go('/nyamnyam');
-              break;
-            case 4:
-              context.go('/settings');
-              break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: '홈',
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppColors.accent,
+              width: 0.5,
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.directions_bus_filled),
-            selectedIcon: Icon(Icons.directions_bus_filled),
-            label: '정류장',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.alt_route),
-            selectedIcon: Icon(Icons.alt_route),
-            label: '노선',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.restaurant),
-            selectedIcon: Icon(Icons.restaurant),
-            label: '냠냠',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: '설정',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            switch (index) {
+              case 0:
+                context.go('/home');
+                break;
+              case 1:
+                context.go('/stops');
+                break;
+              case 2:
+                context.go('/routes');
+                break;
+              case 3:
+                context.go('/nyamnyam');
+                break;
+              case 4:
+                context.go('/settings');
+                break;
+            }
+          },
+          destinations: [
+            NavigationDestination(
+              icon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.home_outlined),
+              ),
+              selectedIcon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.home),
+              ),
+              label: '홈',
+            ),
+            NavigationDestination(
+              icon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.directions_bus_filled),
+              ),
+              selectedIcon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.directions_bus_filled),
+              ),
+              label: '정류장',
+            ),
+            NavigationDestination(
+              icon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.alt_route),
+              ),
+              selectedIcon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.alt_route),
+              ),
+              label: '노선',
+            ),
+            NavigationDestination(
+              icon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.restaurant),
+              ),
+              selectedIcon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.restaurant),
+              ),
+              label: '냠냠',
+            ),
+            NavigationDestination(
+              icon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.settings_outlined),
+              ),
+              selectedIcon: Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: const Icon(Icons.settings),
+              ),
+              label: '설정',
+            ),
+          ],
+        ),
       ),
     );
   }

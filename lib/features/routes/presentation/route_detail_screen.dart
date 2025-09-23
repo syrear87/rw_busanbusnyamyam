@@ -57,7 +57,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
   Timer? _refreshTimer;
   Timer? _countdownTimer; // 카운트다운 타이머
   AnimationController? _refreshAnimationController; // 새로고침 애니메이션 컨트롤러
-  int _countdownSeconds = 30; // 30초 카운트다운
+  int _countdownSeconds = 15; // 15초 카운트다운
   DateTime? _lastRefreshTime;
   List<int> _trafficColors = []; // 구간별 트래픽 색상 (-1=grey, 0=green, 1=amber, 2=red)
   List<RouteStop> _routeStops = []; // 정류장 목록 캐시
@@ -177,13 +177,13 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
-        print('🔄 30초 자동 갱신 실행');
+        print('🔄 15초 자동 갱신 실행');
         setState(() {
           _lastRefreshTime = DateTime.now();
         });
-        // Plan A: 트래픽 색상 갱신 (1콜/30초)
+        // Plan A: 트래픽 색상 갱신 (1콜/15초)
         _updateTrafficColors();
         
         // 새로고침 애니메이션 시작
@@ -210,7 +210,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
         });
 
         if (_countdownSeconds <= 0) {
-          _countdownSeconds = 30; // 리셋
+          _countdownSeconds = 15; // 리셋
         }
       }
     });
