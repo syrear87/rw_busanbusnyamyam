@@ -20,7 +20,17 @@
       "Bash(flutter clean:*)",
       "Bash(./gradlew:*)",
       "Bash(keytool:*)",
-      "Read(//Users/shukim/.android/**)"
+      "Read(//Users/shukim/.android/**)",
+      "Bash(java:*)",
+      "Bash(echo $JAVA_HOME)",
+      "Bash(/usr/libexec/java_home:*)",
+      "Read(//Applications/**)",
+      "Bash(export JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\")",
+      "Bash(flutter install:*)",
+      "Bash(pkill:*)",
+      "Bash(flutter:*)",
+      "Bash(nc:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

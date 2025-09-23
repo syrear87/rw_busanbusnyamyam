@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/services/admob_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // AdMob 초기화
+  await AdMobService.initialize();
+  
   runApp(const ProviderScope(child: BusanBusNyamNyamApp()));
 }
 

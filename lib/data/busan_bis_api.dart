@@ -34,12 +34,22 @@ class BisHttp {
       }
     }
     final uri = Uri.parse('${BisConfig.base}$path').replace(queryParameters: qp);
+    print('🔗 BIS GET $uri');
     final res = await http.get(uri).timeout(BisConfig.timeout);
+    print('📡 HTTP 응답 상태: ${res.statusCode}');
     if (res.statusCode != 200) { throw Exception('HTTP ${res.statusCode}'); }
     final body = utf8.decode(res.bodyBytes);
+    print('📄 응답 본문 길이: ${body.length}');
+    print('📄 응답 본문 (처음 500자): ${body.substring(0, body.length > 500 ? 500 : body.length)}');
     final doc  = xml.XmlDocument.parse(body);
     final code = _first(doc, 'resultCode');
-    if (code != '00') { throw Exception('BIS $code ${_first(doc,'resultMsg')}'); }
+    final msg = _first(doc, 'resultMsg');
+    print('🔍 BIS 응답 코드: $code');
+    print('🔍 BIS 응답 메시지: $msg');
+    if (code != '00' && code.isNotEmpty) { 
+      print('❌ BIS API 오류: $code - $msg');
+      throw Exception('BIS $code : $msg'); 
+    }
     return doc;
   }
   static String _first(xml.XmlDocument d, String tag) =>

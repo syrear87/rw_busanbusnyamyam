@@ -8,6 +8,7 @@ import '../data/stop_detail_models.dart';
 import '../data/stop_detail_providers.dart';
 import '../data/bus_arrival_model.dart';
 import '../data/bus_arrival_provider.dart';
+import '../../../../widgets/bottom_banner_ad_widget.dart';
 
 class StopDetailScreen extends ConsumerStatefulWidget {
   const StopDetailScreen({super.key});
@@ -205,21 +206,33 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 정류장 정보 카드
-            _buildInfoCard(context, stopMeta, distance),
-            const SizedBox(height: 16),
+            // 메인 콘텐츠
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 정류장 정보 카드
+                    _buildInfoCard(context, stopMeta, distance),
+                    const SizedBox(height: 16),
 
-            // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
-            _buildControlArea(),
-            const SizedBox(height: 16),
+                    // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
+                    _buildControlArea(),
+                    const SizedBox(height: 16),
 
-            // 도착 정보 리스트
-            _buildArrivalsList(arrivalsAsync, busArrivalsFromTabs, arrivalSort),
+                    // 도착 정보 리스트
+                    _buildArrivalsList(arrivalsAsync, busArrivalsFromTabs, arrivalSort),
+                  ],
+                ),
+              ),
+            ),
+
+            // 하단 배너 광고
+            const BottomBannerAdWidget(),
           ],
         ),
       ),

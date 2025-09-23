@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../data/busan_bis_api.dart';
 import '../../../../data/route_traffic.dart';
 import '../../stops/data/stop_detail_providers.dart';
+import '../../../../widgets/bottom_banner_ad_widget.dart';
 
 // 즐겨찾기 노선 관리
 class FavoriteRoutesNotifier extends StateNotifier<Set<String>> {
@@ -291,21 +292,33 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 노선 상세 정보 (API 호출 결과)
-            _buildRouteDetails(lineid, lineno),
-            const SizedBox(height: 16),
-            
-            // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
-            _buildControlArea(),
-            const SizedBox(height: 16),
-            
-            // 정류장 목록
-            _buildRouteStopsList(lineid, lineno, bustype),
+            // 메인 콘텐츠
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 노선 상세 정보 (API 호출 결과)
+                    _buildRouteDetails(lineid, lineno),
+                    const SizedBox(height: 16),
+
+                    // 컨트롤 영역 (남은시간 + 새로고침 애니메이션)
+                    _buildControlArea(),
+                    const SizedBox(height: 16),
+
+                    // 정류장 목록
+                    _buildRouteStopsList(lineid, lineno, bustype),
+                  ],
+                ),
+              ),
+            ),
+
+            // 하단 배너 광고
+            const BottomBannerAdWidget(),
           ],
         ),
       ),
@@ -692,7 +705,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '노선 정보를 불러올 수 없습니다',
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                          fontSize: 19,
+                fontSize: 19,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
               ),
@@ -783,7 +796,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               '$label:',
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                          fontSize: 19,
+                fontSize: 19,
                 color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
@@ -794,9 +807,11 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
               value,
               style: const TextStyle(
                 fontFamily: 'Dongle',
-                          fontSize: 19,
+                fontSize: 19,
                 color: AppColors.text,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
           ),
         ],
@@ -829,7 +844,7 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
             '0:${_countdownSeconds.toString().padLeft(2, '0')}',
             style: const TextStyle(
               fontFamily: 'Dongle',
-                          fontSize: 19,
+              fontSize: 19,
               color: AppColors.accent,
               fontWeight: FontWeight.bold,
             ),

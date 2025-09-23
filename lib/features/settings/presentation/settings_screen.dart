@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/refresh_interval_provider.dart';
 import '../data/package_info_provider.dart';
+import '../../../../widgets/top_banner_ad_widget.dart';
 
 class SettingsScreen extends HookConsumerWidget {
   const SettingsScreen({super.key});
@@ -15,8 +16,15 @@ class SettingsScreen extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('설정')),
-      body: ListView(
+      body: Column(
         children: [
+          // 상단 배너 광고
+          const TopBannerAdWidget(),
+
+          // 메인 콘텐츠
+          Expanded(
+            child: ListView(
+              children: [
           // 새로고침 간격
           ListTile(
             title: const Text('새로고침 간격'),
@@ -60,6 +68,9 @@ class SettingsScreen extends HookConsumerWidget {
             title: const Text('캐시 삭제'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => _clearCache(context),
+          ),
+              ],
+            ),
           ),
         ],
       ),

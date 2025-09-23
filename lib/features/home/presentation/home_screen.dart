@@ -10,6 +10,7 @@ import '../../stops/data/bus_arrival_provider.dart';
 import '../../stops/data/bus_arrival_model.dart';
 import '../../routes/presentation/route_detail_screen.dart';
 import '../../../../data/busan_bis_api.dart';
+import '../../../../widgets/top_banner_ad_widget.dart';
 
 // 노선 정보를 위한 Provider
 final routeInfoProvider = FutureProvider.family<RouteMeta?, String>((ref, lineid) {
@@ -94,19 +95,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Scaffold(
       backgroundColor: AppColors.ivoryBase, // 스크린 배경색
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 즐겨찾기 정류장 섹션
-              _buildFavoriteStopsSection(),
-              const SizedBox(height: 24),
-              
-              // 즐겨찾기 노선 섹션
-              _buildFavoriteRoutesSection(),
-            ],
-          ),
+        child: Column(
+          children: [
+            // 상단 배너 광고
+            const TopBannerAdWidget(),
+
+            // 메인 콘텐츠
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 즐겨찾기 정류장 섹션
+                    _buildFavoriteStopsSection(),
+                    const SizedBox(height: 24),
+                    
+                    // 즐겨찾기 노선 섹션
+                    _buildFavoriteRoutesSection(),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -528,17 +539,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: Colors.grey,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.error,
+                  Icons.directions_bus,
                   color: Colors.white,
                   size: 20,
                 ),
               ),
               title: Text(
-                '노선 정보 오류',
+                '노선 정보 로드 실패',
                 style: const TextStyle(
                   fontFamily: 'Dongle',
                   fontSize: 19,
@@ -554,6 +565,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   color: Colors.grey,
                 ),
               ),
+              trailing: IconButton(
+                onPressed: () {
+                  ref
+                      .read(favoriteRoutesProvider.notifier)
+                      .toggleFavorite(lineid);
+                },
+                icon: const Icon(
+                  Icons.star,
+                  color: Colors.amber,
+                ),
+              ),
+              onTap: () {
+                context.go(
+                  '/routes/$lineid',
+                  extra: {
+                    'lineno': lineid,
+                    'bustype': '',
+                  },
+                );
+              },
             ),
           );
         },
