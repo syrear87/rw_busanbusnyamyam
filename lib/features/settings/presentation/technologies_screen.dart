@@ -136,7 +136,6 @@ class TechnologiesScreen extends StatelessWidget {
                 items: [
                   _buildTechItem('부산버스정보시스템 OpenAPI', Colors.brown),
                   _buildTechItem('카카오맵 장소검색 API', Colors.brown),
-                  _buildTechItem('OpenStreetMap tiles', Colors.brown),
                 ],
               ),
               const SizedBox(height: 16),

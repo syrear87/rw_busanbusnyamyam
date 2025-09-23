@@ -7,7 +7,8 @@ enum PlaceCategory {
 }
 
 enum PlaceSource {
-  osm('OSM');
+  osm('OSM'),
+  kakao('KAKAO');
 
   const PlaceSource(this.value);
   final String value;

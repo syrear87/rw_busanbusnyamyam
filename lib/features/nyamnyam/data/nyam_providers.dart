@@ -3,16 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'place_repository.dart';
 import 'overpass_place_repository.dart';
+import 'kakao_place_repository.dart';
 import 'cached_place_repository.dart';
 import 'place_model.dart';
 import 'nyam_query_state.dart';
 import 'location_provider.dart';
 import '../../stops/data/location_provider.dart' as stops_location;
 
-// Repository provider
+// Repository provider - 카카오맵 API 사용
 final placeRepoProvider = Provider<PlaceRepository>((ref) {
-  final overpassRepo = OverpassPlaceRepository();
-  return CachedPlaceRepository(overpassRepo);
+  final kakaoRepo = KakaoPlaceRepository();
+  return CachedPlaceRepository(kakaoRepo);
 });
 
 // Query state provider with location integration

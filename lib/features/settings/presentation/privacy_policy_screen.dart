@@ -49,7 +49,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               
               // 날짜
               const Text(
-                '시행일: 2025-01-09 · 마지막 업데이트: 2025-01-09',
+                '시행일: 2025-01-09 · 마지막 업데이트: 2025-09-23',
                 style: TextStyle(
                   fontFamily: 'Dongle',
                   fontSize: 16,
@@ -244,6 +244,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
+                      '• 주변 맛집·카페 정보 제공: 카카오맵 장소검색 API를 사용해 반경 기반으로 장소 정보를 제공합니다.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
                       '• 광고 서비스: Google AdMob을 통해 무료 앱 운영을 위한 광고를 제공합니다.',
                       style: TextStyle(
                         fontSize: 14,
@@ -271,7 +280,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      '• 부산버스정보시스템: 버스 도착 정보 조회를 위해 위치 정보를 전송합니다.',
+                      '• 부산버스 공공데이터: 버스 도착/노선 정보 제공을 위해 필요한 범위 내 요청 정보를 전송합니다.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '• 카카오맵(카카오 로컬 API): 주변 장소(맛집·카페 등) 검색을 위해 검색어, 좌표 등 요청 정보를 전송합니다.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -289,7 +307,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      '• 위치 정보: 앱 사용 중에만 임시 저장되며, 앱 종료 시 즉시 삭제됩니다.',
+                      '• 위치 정보: 앱 사용 중 기능 제공을 위해서만 사용되며, 필요 기간 경과 또는 목적 달성 시 지체 없이 파기합니다.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -343,7 +361,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      '• 모든 데이터는 로컬에만 저장되며, 외부 서버로 전송되지 않습니다.',
+                      '• 개인정보 최소 수집 및 접근 권한 통제를 적용합니다.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -352,7 +370,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      '• 위치 정보는 HTTPS를 통해 안전하게 전송됩니다.',
+                      '• 네트워크 전송 시 HTTPS 암호화를 적용합니다.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      '• 로그/오류 데이터 접근 통제 및 보관 기간을 관리합니다.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -379,7 +406,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      '이메일: support@busanbusnyamyam.com',
+                      '이메일: syrear87@gmail.com',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,

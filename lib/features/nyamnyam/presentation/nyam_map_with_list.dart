@@ -116,28 +116,6 @@ class _MapWithListViewState extends ConsumerState<MapWithListView> {
           child: _buildMap(currentQuery, currentLocation, currentPlaces),
         ),
 
-        // 하단 Attribution (필수) - 지도 영역 내 하단 (동적 위치, 애니메이션 적용)
-        AnimatedPositioned(
-          duration: _isDragging ? Duration.zero : const Duration(milliseconds: 300),
-          curve: _isDragging ? Curves.linear : Curves.easeInOut,
-          bottom: _listHeight + 20, // 리스트 높이 + 여백
-          right: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.ivorySurface.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              '© OpenStreetMap contributors',
-              style: TextStyle(
-                fontFamily: 'Dongle',
-                fontSize: 14,
-                color: AppColors.textBody,
-              ),
-            ),
-          ),
-        ),
 
         // 위치 로딩 인디케이터
         if (!currentLocation.hasValidLocation && 
@@ -732,6 +710,23 @@ class PlaceListItem extends StatelessWidget {
     required this.onTap,
   });
 
+  void _copyAddressToClipboard(BuildContext context, String address) {
+    Clipboard.setData(ClipboardData(text: address));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '주소가 복사되었습니다',
+          style: const TextStyle(
+            fontFamily: 'Dongle',
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: AppColors.primarySage,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final walkTime = (place.distanceMeters / 70).ceil();
@@ -833,24 +828,67 @@ class PlaceListItem extends StatelessWidget {
                   ),
                 ),
 
-                // 소스 배지
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySage.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    place.source.value,
-                    style: const TextStyle(
-                      fontFamily: 'Dongle',
-                      fontSize: 12,
-                      color: AppColors.primarySage,
+                // 소스 배지와 주소 복사 버튼
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySage.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        place.source.value,
+                        style: const TextStyle(
+                          fontFamily: 'Dongle',
+                          fontSize: 12,
+                          color: AppColors.primarySage,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (place.address != null) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _copyAddressToClipboard(context, place.address!),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySage.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppColors.primarySage.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.copy,
+                                size: 12,
+                                color: AppColors.primarySage,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '주소 복사',
+                                style: TextStyle(
+                                  fontFamily: 'Dongle',
+                                  fontSize: 11,
+                                  color: AppColors.primarySage,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
