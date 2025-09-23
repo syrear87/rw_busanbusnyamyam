@@ -13,8 +13,30 @@ import '../../../../data/busan_bis_api.dart';
 import '../../../../widgets/top_banner_ad_widget.dart';
 
 // 노선 정보를 위한 Provider
-final routeInfoProvider = FutureProvider.family<RouteMeta?, String>((ref, lineid) {
-  return BisApi.routeInfo(lineid);
+final routeInfoProvider = FutureProvider.family<RouteMeta?, String>((ref, lineid) async {
+  try {
+    print('🏠 홈탭 노선 정보 요청: $lineid');
+    final result = await BisApi.routeInfo(lineid);
+    print('🏠 홈탭 노선 정보 성공: ${result.lineno}번');
+    return result;
+  } catch (e) {
+    print('🏠 홈탭 노선 정보 실패: $lineid - $e');
+    
+    // 실패한 경우 기본 RouteMeta 생성 (노선 정보 없이 표시)
+    return RouteMeta(
+      lineid: lineid,
+      buslinenum: lineid, // lineid를 노선번호로 표시
+      bustype: '일반버스',
+      startpoint: null,
+      endpoint: null,
+      firsttime: null,
+      endtime: null,
+      headway: null,
+      headwaynorm: null,
+      headwaypeak: null,
+      headwayholi: null,
+    );
+  }
 });
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -180,6 +202,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // 즐겨찾기 노선 섹션
   Widget _buildFavoriteRoutesSection() {
     final favoriteRoutes = ref.watch(favoriteRoutesProvider);
+    
+    // 즐겨찾는 노선 ID들 로그 출력
+    print('🏠 즐겨찾는 노선 IDs: ${favoriteRoutes.toList()}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,6 +458,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           return routeInfoAsync.when(
             data: (routeMeta) {
               final busNumber = routeMeta?.lineno ?? lineid;
+              final isFallback = routeMeta?.startpoint == null && routeMeta?.endpoint == null;
               
               return ListTile(
                 contentPadding: const EdgeInsets.all(16),
@@ -450,10 +476,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
                 title: Text(
                   '${busNumber}번 노선',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Dongle',
                     fontSize: 19,
-                    color: Colors.black,
+                    color: isFallback ? Colors.orange : Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
