@@ -75,6 +75,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.10
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -86,6 +88,9 @@ flutter:
     - assets/data/busan_stops.json
     - assets/images/bus_stop.png
     - assets/images/low_floor_bus.png
+    - assets/images/busanbusnyamyam_icon.png
+    - assets/images/splash_bg.png
+    - assets/images/splash_icon.png
     - assets/mock/nyam_FD6.json
     - assets/mock/nyam_CE7.json
   fonts:
@@ -97,3 +102,27 @@ flutter:
           weight: 400
         - asset: assets/fonts/Dongle-Bold.ttf
           weight: 700
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/busanbusnyamyam_icon.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#000000"
+  image: assets/images/splash_bg.png
+  branding: assets/images/splash_icon.png
+  color_dark: "#000000"
+  image_dark: assets/images/splash_bg.png
+  branding_dark: assets/images/splash_icon.png
+  android_12:
+    image: assets/images/splash_bg.png
+    branding: assets/images/splash_icon.png
+    color: "#000000"
+    image_dark: assets/images/splash_bg.png
+    branding_dark: assets/images/splash_icon.png
+    color_dark: "#000000"
+  fullscreen: true
+  android_gravity: fill
+  ios_content_mode: scaleAspectFill
