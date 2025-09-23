@@ -8,6 +8,7 @@ import '../data/route_model.dart' hide RouteStop;
 import '../data/nyam_query_state.dart';
 import '../data/nyam_providers.dart';
 import '../data/busan_stops_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 class RouteSelectionScreen extends ConsumerStatefulWidget {
   const RouteSelectionScreen({super.key});
@@ -306,8 +307,15 @@ class _RouteSelectionScreenState extends ConsumerState<RouteSelectionScreen> {
   }
 
   void _onRouteSelectedNew(RouteMeta route) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => RouteStopsScreenNew(route: route)),
+    print('🚌 노선 선택: ${route.lineno}번');
+    
+    // RouteStopsScreenNew를 모달뷰로 표시
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => RouteStopsScreenNew(route: route),
     );
   }
 
@@ -353,47 +361,80 @@ class RouteStopsScreenNew extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0DFCC),
-      appBar: AppBar(
-        title: Text(
-          '${route.lineno}번 정류장',
-          style: const TextStyle(
-            fontFamily: 'Dongle',
-            fontSize: 28,
-            color: Color(0xFF7BB074),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      body: FutureBuilder<List<RouteStop>>(
-        future: BisApi.routeStops(route.lineid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return _buildLoadingState();
-          }
+      child: Column(
+        children: [
+          // 드래그 핸들
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[400],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // 헤더
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  '${route.lineno}번 정류장',
+                  style: TextStyle(
+                    fontFamily: 'Dongle',
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(Icons.close, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          
+          const Divider(height: 1),
+          
+          // 정류장 리스트
+          Expanded(
+            child: FutureBuilder<List<RouteStop>>(
+              future: BisApi.routeStops(route.lineid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildLoadingState();
+                }
 
-          if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error.toString());
-          }
+                if (snapshot.hasError) {
+                  return _buildErrorState(snapshot.error.toString());
+                }
 
-          final stops = snapshot.data ?? [];
-          if (stops.isEmpty) {
-            return _buildEmptyState();
-          }
+                final stops = snapshot.data ?? [];
+                if (stops.isEmpty) {
+                  return _buildEmptyState();
+                }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: stops.length,
-            itemBuilder: (context, index) {
-              final stop = stops[index];
-              return _buildStopCard(context, ref, stop, index);
-            },
-          );
-        },
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: stops.length,
+                  itemBuilder: (context, index) {
+                    final stop = stops[index];
+                    return _buildStopCard(context, ref, stop, index);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -404,49 +445,41 @@ class RouteStopsScreenNew extends ConsumerWidget {
     RouteStop routeStop,
     int index,
   ) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        side: BorderSide(color: const Color(0xFF7BB074).withOpacity(0.3)),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _onStopSelectedNew(context, ref, routeStop),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // 순서 번호
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7BB074),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      routeStop.index.toString(),
-                      style: const TextStyle(
-                        fontFamily: 'Dongle',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _onStopSelectedNew(context, ref, routeStop),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // 순서 번호
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySage,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    routeStop.index.toString(),
+                    style: const TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+              ),
+              const SizedBox(width: 16),
 
                 // 정류장 정보
                 Expanded(
@@ -455,21 +488,21 @@ class RouteStopsScreenNew extends ConsumerWidget {
                     children: [
                       Text(
                         routeStop.nodenm,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 20,
+                          fontSize: 21,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppColors.textStrong,
                         ),
                       ),
                       const SizedBox(height: 2),
                       if (routeStop.arsno != null)
                         Text(
                           'ARS: ${routeStop.arsno}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Dongle',
-                            fontSize: 16,
-                            color: Colors.grey,
+                            fontSize: 17,
+                            color: AppColors.textMuted,
                           ),
                         ),
                     ],
@@ -486,75 +519,77 @@ class RouteStopsScreenNew extends ConsumerWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildLoadingState() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: 10,
-      itemBuilder: (context, index) => Container(
+      itemBuilder: (context, index) => Card(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
+        elevation: 2,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: const Color(0xFF7BB074).withOpacity(0.3)),
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                shape: BoxShape.circle,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 16,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(4),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 16,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 12,
-                    width: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(4),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 12,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bus_alert, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          Icon(Icons.bus_alert, size: 64, color: AppColors.textMuted),
+          const SizedBox(height: 16),
           Text(
             '정류장 정보가 없습니다',
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 24,
-              color: Colors.grey,
+              color: AppColors.textMuted,
             ),
           ),
         ],
@@ -567,14 +602,14 @@ class RouteStopsScreenNew extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          Icon(Icons.error_outline, size: 64, color: AppColors.error),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             '정류장 조회 중 오류가 발생했습니다',
             style: TextStyle(
               fontFamily: 'Dongle',
               fontSize: 24,
-              color: Colors.red,
+              color: AppColors.error,
             ),
           ),
           const SizedBox(height: 8),
@@ -634,9 +669,9 @@ class RouteStopsScreenNew extends ConsumerWidget {
     // nyamnyam 화면의 query provider에 정류장 설정
     ref.read(nyamQueryProvider.notifier).selectStop(selectedStop);
 
-    // 모든 네비게이션 스택 팝 (바텀시트와 정류장 상세 화면 모두 닫기)
-    Navigator.of(context).pop();
-    Navigator.of(context).pop();
+    // 모든 모달뷰 닫기 (정류장 리스트 모달 + 버스 선택 모달)
+    Navigator.of(context).pop(); // 정류장 리스트 모달 닫기
+    Navigator.of(context).pop(); // 버스 선택 모달 닫기
 
     // 성공 메시지 표시
     ScaffoldMessenger.of(context).showSnackBar(
