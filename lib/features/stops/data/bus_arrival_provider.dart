@@ -2,6 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'bus_arrival_model.dart';
 import '../../../../core/network/bis_api.dart';
 import '../../../../core/network/bis_models.dart';
+import '../../../../core/cache/cache_service.dart';
 
 // 정류장별 도착 정보 StateNotifier
 class BusArrivalNotifier extends StateNotifier<AsyncValue<List<BusArrival>>> {
@@ -11,10 +12,13 @@ class BusArrivalNotifier extends StateNotifier<AsyncValue<List<BusArrival>>> {
 
   final String arsno;
 
-  // API에서 도착 정보 로드
+  // 캐시 서비스 인스턴스
+  final CacheService _cacheService = CacheService();
+
+  // API에서 도착 정보 로드 (캐시 우선)
   Future<void> _loadArrivals() async {
     try {
-      print('🚌 BIS API 호출 시작 - ARS번호: $arsno');
+      print('🚌 도착 정보 조회 시작 (캐시 우선) - ARS번호: $arsno');
 
       // ARS번호가 비어있으면 빈 리스트 반환
       if (arsno.isEmpty) {
@@ -23,10 +27,10 @@ class BusArrivalNotifier extends StateNotifier<AsyncValue<List<BusArrival>>> {
         return;
       }
 
-      // BIS API 호출
-      final arrivals = await BisApi.fetchArrivalsByArsNo(arsno);
+      // 캐시 서비스를 통한 도착 정보 조회 (캐시 우선, API 백업)
+      final arrivals = await _cacheService.getArrivals(arsno);
 
-      print('📊 BIS API 응답 - 정류장 $arsno: ${arrivals.length}개 도착정보');
+      print('📊 도착 정보 조회 완료 - 정류장 $arsno: ${arrivals.length}개 도착정보');
 
       for (int i = 0; i < arrivals.length; i++) {
         final arrival = arrivals[i];
@@ -36,7 +40,7 @@ class BusArrivalNotifier extends StateNotifier<AsyncValue<List<BusArrival>>> {
       }
 
       if (arrivals.isEmpty) {
-        print('⚠️ API 데이터 없음, 빈 리스트 반환');
+        print('⚠️ 도착 정보 없음, 빈 리스트 반환');
         state = const AsyncValue.data([]);
         return;
       }
@@ -71,15 +75,72 @@ class BusArrivalNotifier extends StateNotifier<AsyncValue<List<BusArrival>>> {
       print('✅ 최종 변환 완료: ${convertedArrivals.length}개');
       state = AsyncValue.data(convertedArrivals);
     } catch (e) {
-      print('❌ 도착정보 API 호출 실패, 빈 리스트 반환: $e');
-      // API 호출 실패 시 빈 리스트 반환
+      print('❌ 도착정보 조회 실패, 빈 리스트 반환: $e');
+      // 조회 실패 시 빈 리스트 반환
       state = const AsyncValue.data([]);
     }
   }
 
-  // 수동으로 새로고침
+  // 수동으로 새로고침 (캐시 우선)
   Future<void> refresh() async {
     await _loadArrivals();
+  }
+
+  // 강제 새로고침 (API만 호출)
+  Future<void> forceRefresh() async {
+    try {
+      print('🔄 도착 정보 강제 새로고침 - ARS번호: $arsno');
+
+      if (arsno.isEmpty) {
+        print('⚠️ ARS번호가 비어있음, 빈 리스트 반환');
+        state = const AsyncValue.data([]);
+        return;
+      }
+
+      // 강제 새로고침 (캐시 무시하고 API만 호출)
+      final arrivals = await _cacheService.refreshArrivals(arsno);
+
+      print('📊 강제 새로고침 완료 - 정류장 $arsno: ${arrivals.length}개 도착정보');
+
+      if (arrivals.isEmpty) {
+        print('⚠️ 도착 정보 없음, 빈 리스트 반환');
+        state = const AsyncValue.data([]);
+        return;
+      }
+
+      // BIS Arrival을 BusArrival로 변환
+      final convertedArrivals = arrivals
+          .map(
+            (arrival) => BusArrival(
+              arsno: arsno,
+              bstopid: '',
+              nodenm: arrival.nodenm,
+              gpsx: 0.0,
+              gpsy: 0.0,
+              lineno: arrival.lineno,
+              lineid: arrival.lineid,
+              bstopidx: 0,
+              bustype: arrival.bustype,
+              carno1: '',
+              carno2: '',
+              min1: arrival.min1,
+              min2: arrival.min2,
+              station1: arrival.station1,
+              station2: arrival.station2,
+              lowplate1: '',
+              lowplate2: '',
+              seat1: '',
+              seat2: '',
+            ),
+          )
+          .toList();
+
+      print('✅ 강제 새로고침 완료: ${convertedArrivals.length}개');
+      state = AsyncValue.data(convertedArrivals);
+    } catch (e) {
+      print('❌ 강제 새로고침 실패: $e');
+      // 강제 새로고침 실패 시 기존 데이터 유지
+    }
   }
 
   @override
