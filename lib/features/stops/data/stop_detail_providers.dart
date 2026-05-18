@@ -162,7 +162,7 @@ class BisApiClient {
       final arrivals = items.map((item) {
         String getText(String tagName) {
           final elements = item.findElements(tagName);
-          return elements.isEmpty ? '' : (elements.first.value?.trim() ?? '');
+          return elements.isEmpty ? '' : elements.first.innerText.trim();
         }
 
         final arrival = ArrivalItem(

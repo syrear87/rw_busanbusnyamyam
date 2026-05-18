@@ -7,7 +7,7 @@ import 'cache_models.dart';
 class CacheDatabase {
   static Database? _database;
   static const String _databaseName = 'bus_cache.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   /// 데이터베이스 인스턴스 가져오기
   static Future<Database> get database async {
@@ -41,8 +41,8 @@ class CacheDatabase {
         arsno TEXT NOT NULL,
         lat REAL NOT NULL,
         lng REAL NOT NULL,
-        cached_at INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
+        cachedAt TEXT NOT NULL,
+        expiresAt TEXT NOT NULL
       )
     ''');
 
@@ -69,8 +69,8 @@ class CacheDatabase {
         lowplate2 TEXT NOT NULL,
         seat1 TEXT NOT NULL,
         seat2 TEXT NOT NULL,
-        cached_at INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
+        cachedAt TEXT NOT NULL,
+        expiresAt TEXT NOT NULL
       )
     ''');
 
@@ -79,19 +79,19 @@ class CacheDatabase {
       CREATE TABLE cached_routes (
         lineid TEXT PRIMARY KEY,
         lineno TEXT NOT NULL,
-        route_type TEXT NOT NULL,
-        start_station TEXT NOT NULL,
-        end_station TEXT NOT NULL,
-        cached_at INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
+        routeType TEXT NOT NULL,
+        startStation TEXT NOT NULL,
+        endStation TEXT NOT NULL,
+        cachedAt TEXT NOT NULL,
+        expiresAt TEXT NOT NULL
       )
     ''');
 
     // 인덱스 생성
     await db.execute('CREATE INDEX idx_cached_arrivals_arsno ON cached_arrivals(arsno)');
-    await db.execute('CREATE INDEX idx_cached_arrivals_expires ON cached_arrivals(expires_at)');
-    await db.execute('CREATE INDEX idx_cached_stations_expires ON cached_stations(expires_at)');
-    await db.execute('CREATE INDEX idx_cached_routes_expires ON cached_routes(expires_at)');
+    await db.execute('CREATE INDEX idx_cached_arrivals_expires ON cached_arrivals(expiresAt)');
+    await db.execute('CREATE INDEX idx_cached_stations_expires ON cached_stations(expiresAt)');
+    await db.execute('CREATE INDEX idx_cached_routes_expires ON cached_routes(expiresAt)');
 
     print('✅ 캐시 데이터베이스 생성 완료');
   }
@@ -99,7 +99,11 @@ class CacheDatabase {
   /// 데이터베이스 업그레이드
   static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     print('🔄 캐시 데이터베이스 업그레이드: $oldVersion -> $newVersion');
-    // 향후 스키마 변경 시 여기에 업그레이드 로직 추가
+    // 캐시 데이터는 언제든 재생성 가능하므로 테이블 재생성
+    await db.execute('DROP TABLE IF EXISTS cached_arrivals');
+    await db.execute('DROP TABLE IF EXISTS cached_stations');
+    await db.execute('DROP TABLE IF EXISTS cached_routes');
+    await _onCreate(db, newVersion);
   }
 
   /// 정류장 정보 저장
@@ -177,7 +181,7 @@ class CacheDatabase {
       'cached_arrivals',
       where: 'arsno = ?',
       whereArgs: [arsno],
-      orderBy: 'cached_at DESC',
+      orderBy: 'cachedAt DESC',
     );
 
     if (maps.isEmpty) return [];
@@ -203,8 +207,8 @@ class CacheDatabase {
     final db = await database;
     await db.delete(
       'cached_arrivals',
-      where: 'arsno = ? AND expires_at < ?',
-      whereArgs: [arsno, DateTime.now().millisecondsSinceEpoch],
+      where: 'arsno = ? AND expiresAt < ?',
+      whereArgs: [arsno, DateTime.now().toIso8601String()],
     );
   }
 
@@ -257,22 +261,24 @@ class CacheDatabase {
     final db = await database;
     final now = DateTime.now().millisecondsSinceEpoch;
 
+    final nowIso = DateTime.now().toIso8601String();
+
     final stationsDeleted = await db.delete(
       'cached_stations',
-      where: 'expires_at < ?',
-      whereArgs: [now],
+      where: 'expiresAt < ?',
+      whereArgs: [nowIso],
     );
 
     final arrivalsDeleted = await db.delete(
       'cached_arrivals',
-      where: 'expires_at < ?',
-      whereArgs: [now],
+      where: 'expiresAt < ?',
+      whereArgs: [nowIso],
     );
 
     final routesDeleted = await db.delete(
       'cached_routes',
-      where: 'expires_at < ?',
-      whereArgs: [now],
+      where: 'expiresAt < ?',
+      whereArgs: [nowIso],
     );
 
     print('🧹 만료된 캐시 데이터 정리: 정류장 $stationsDeleted개, 도착정보 $arrivalsDeleted개, 노선 $routesDeleted개');
@@ -296,12 +302,12 @@ class CacheDatabase {
     )) ?? 0;
 
     final expiredCount = Sqflite.firstIntValue(await db.rawQuery(
-      'SELECT COUNT(*) FROM cached_stations WHERE expires_at < ?',
-      [now]
+      'SELECT COUNT(*) FROM cached_stations WHERE expiresAt < ?',
+      [DateTime.now().toIso8601String()]
     )) ?? 0;
 
     final lastUpdate = Sqflite.firstIntValue(await db.rawQuery(
-      'SELECT MAX(cached_at) FROM cached_arrivals'
+      'SELECT MAX(cachedAt) FROM cached_arrivals'
     )) ?? 0;
 
     return CacheStatus(

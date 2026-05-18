@@ -48,12 +48,14 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
         );
         // 15초 후 API 호출하여 최신화
         _startRefreshTimer(bstopid);
-        // 카운트다운 타이머 시작
-        _startCountdownTimer();
       } else {
         final name = extra?['name'] as String? ?? '알 수 없는 정류장';
         print('📍 정류장 상세 진입: extra 데이터 사용 - $name');
+        // extra 경로로 진입해도 stopArrivalsProvider를 15초마다 갱신
+        _startRefreshTimer(bstopid);
       }
+      // 항상 카운트다운 타이머 시작
+      _startCountdownTimer();
     });
   }
 
@@ -62,18 +64,19 @@ class _StopDetailScreenState extends ConsumerState<StopDetailScreen>
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
-        // 정류장 탭 데이터가 있으면 해당 ARS 번호로 API 호출
         final stopFromTabs = ref.read(stopDetailFromTabsProvider(bstopid));
         if (stopFromTabs?.s.arsno.isNotEmpty == true) {
           ref.invalidate(busArrivalProvider(stopFromTabs!.s.arsno));
-          // 새로고침 애니메이션 시작
-          _refreshAnimationController?.repeat();
-          // 애니메이션 2초 후 정지
-          Timer(const Duration(seconds: 2), () {
-            _refreshAnimationController?.stop();
-            _refreshAnimationController?.reset();
-          });
+        } else {
+          // extra 경로 진입 시 stopArrivalsProvider 갱신
+          ref.invalidate(stopArrivalsProvider);
         }
+        // 새로고침 애니메이션
+        _refreshAnimationController?.repeat();
+        Timer(const Duration(seconds: 2), () {
+          _refreshAnimationController?.stop();
+          _refreshAnimationController?.reset();
+        });
         // 카운트다운 리셋
         _countdownSeconds = 15;
       }

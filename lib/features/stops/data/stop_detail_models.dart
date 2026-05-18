@@ -28,6 +28,16 @@ class StopMeta {
     'lat': lat,
     'lng': lng,
   };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StopMeta &&
+          bstopid == other.bstopid &&
+          arsno == other.arsno;
+
+  @override
+  int get hashCode => Object.hash(bstopid, arsno);
 }
 
 class ArrivalItem {
