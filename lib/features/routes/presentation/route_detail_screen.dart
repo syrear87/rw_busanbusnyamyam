@@ -219,15 +219,34 @@ class _RouteDetailScreenState extends ConsumerState<RouteDetailScreen>
   void _updateTrafficColors() async {
     final routerState = GoRouterState.of(context);
     final lineid = routerState.pathParameters['lineid']!;
-    
+
     // 정류장 목록이 없으면 갱신하지 않음
     if (_routeStops.isEmpty) {
       print('⚠️ 정류장 목록이 없어서 트래픽 색상 갱신 건너뜀');
       return;
     }
-    
-    // Plan A: 백그라운드에서 트래픽 색상 업데이트 (1콜/10초)
-    _updateTrafficColorsInBackground(lineid);
+
+    // 버스 위치(carno) 포함한 정류장 목록 재조회 (신선한 데이터)
+    _refreshVehiclePositions(lineid);
+  }
+
+  void _refreshVehiclePositions(String lineid) async {
+    try {
+      print('🚌 버스 위치 갱신 시작');
+      final stops = await BisApi.routeStops(lineid);
+
+      if (mounted && stops.isNotEmpty) {
+        setState(() {
+          _routeStops = stops;
+          _trafficColors = _generateTrafficColorsFromVehiclePositions(stops);
+        });
+        print('✅ 버스 위치 갱신 완료: ${stops.where((s) => s.carno != null).length}대');
+        _updateTrafficColorsInBackground(lineid);
+      }
+    } catch (e) {
+      print('💥 버스 위치 갱신 실패: $e — 트래픽 색상만 갱신');
+      _updateTrafficColorsInBackground(lineid);
+    }
   }
 
   @override
